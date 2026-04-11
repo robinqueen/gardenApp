@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+client/node_modules/
+
+# Build outputs
+client/dist/
+api/dist/
+api/bin/
+api/obj/
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE / Editor
+.vscode/
+.idea/
+*.code-workspace
+.vs/
+
+# Claude Code
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -7,11 +7,12 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { to: '/planner',  icon: '🌿', label: 'Garden'   },
-  { to: '/calendar', icon: '📅', label: 'Schedule' },
-  { to: '/seeds',    icon: '🌱', label: 'Seeds'    },
-  { to: '/log',      icon: '📋', label: 'Log'      },
-  { to: '/settings', icon: '⚙️', label: 'Settings' },
+  { to: '/dashboard', icon: '🏠', label: 'Home'     },
+  { to: '/planner',   icon: '🌿', label: 'Garden'   },
+  { to: '/calendar',  icon: '📅', label: 'Schedule' },
+  { to: '/seeds',     icon: '🌱', label: 'Seeds'    },
+  { to: '/log',       icon: '📋', label: 'Log'      },
+  { to: '/settings',  icon: '⚙️', label: 'Settings' },
 ];
 
 export function Nav() {

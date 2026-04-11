@@ -161,6 +161,15 @@ export function BedGrid({ bed, readonly = false }: BedGridProps) {
                             <span className="cell-offset">+{slot!.weekOffset}w</span>
                           )}
                           {hasWarning && <span className="cell-warn">⚠️</span>}
+                          {slot!.stage && slot!.stage !== 'planned' && slot!.stage !== 'direct-sow' && (
+                            <span className="cell-stage" title={slot!.stage.replace(/-/g, ' ')}>
+                              {slot!.stage === 'seeds-started'       ? '🌱'
+                               : slot!.stage === 'ready-to-transplant' ? '🪴'
+                               : slot!.stage === 'in-ground'           ? '🌿'
+                               : slot!.stage === 'store-bought'        ? '🏪'
+                               : ''}
+                            </span>
+                          )}
                         </>
                       )}
                       {/* Non-origin occupied cells: show a faint ownership indicator */}

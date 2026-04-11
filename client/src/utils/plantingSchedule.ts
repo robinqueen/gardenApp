@@ -5,19 +5,27 @@ import { addDays, toIsoDate } from '../catalog/frostDates';
 /**
  * Generates the sequence of milestone tasks for a single PlantSlot.
  *
- * The pipeline follows the agreed task lifecycle:
- *   Prep → Sow (indoor or direct) → Transplant? → Monitor → Trim? → Harvest → Restart?
+ * The stage field controls which tasks are created and from what anchor date:
  *
- * weekOffset shifts every date forward by (weekOffset × 7) days for succession planting.
+ *   planned             → full cycle from frost-relative dates (default)
+ *   seeds-started       → skip prep/sow; transplant = stageDate + indoorStartWeeks weeks
+ *   ready-to-transplant → skip prep/sow; transplant = stageDate ?? today
+ *   direct-sow          → direct sow path from frost-relative date
+ *   in-ground           → skip all early tasks; monitor/trim/harvest from stageDate
+ *   store-bought        → same as in-ground; stageDate = when planted
+ *
+ * weekOffset shifts every generated date forward by (weekOffset × 7) days.
  */
 export function generateTasksForSlot(
   slot: PlantSlot,
   seed: CatalogSeed,
   bed: Bed,
-  lastFrostDate: Date
+  lastFrostDate: Date,
+  today: Date = new Date()
 ): Task[] {
   const tasks: Task[] = [];
   const offsetDays = slot.weekOffset * 7;
+  const stage = slot.stage ?? 'planned';
 
   function task(
     type: TaskType,
@@ -39,119 +47,273 @@ export function generateTasksForSlot(
     };
   }
 
-  if (seed.canStartIndoors) {
-    // ── Indoor start path ──────────────────────────────────
-    const indoorStartDate = addDays(lastFrostDate, -(seed.indoorStartWeeks * 7));
-    const transplantDate = addDays(lastFrostDate, 7); // 1 week after last frost
+  // ── Resolve anchor dates from stage ───────────────────────────
 
-    tasks.push(
-      task(
-        'prep',
-        addDays(indoorStartDate, -7),
-        `Prep seed trays for ${seed.name}`,
-        `Fill trays with seed-starting mix. Label rows. Have a warm, bright location ready.`
-      )
-    );
-
-    tasks.push(
-      task(
-        'sow-indoor',
-        indoorStartDate,
-        `Start ${seed.name} seeds indoors`,
-        `Sow ${seed.name} seeds ${seed.indoorStartWeeks} weeks before last frost. ` +
-          `Depth: ${Math.round(seed.spacingInches / 8)}"–${Math.round(seed.spacingInches / 6)}". ` +
-          `Keep moist and warm (65–75°F). Germination: 7–14 days.`
-      )
-    );
-
-    tasks.push(
-      task(
-        'transplant',
-        transplantDate,
-        `Transplant ${seed.name} to "${bed.name}"`,
-        `Harden seedlings off for 7–10 days before transplanting. ` +
-          `Plant at ${seed.spacingInches}" spacing. Water in well.` +
-          (seed.needsSupport ? ' Install stakes or cages at planting time.' : '')
-      )
-    );
-  } else {
-    // ── Direct sow path ────────────────────────────────────
-    const directSowDate = addDays(lastFrostDate, seed.directSowWeeks * 7);
-
-    tasks.push(
-      task(
-        'prep',
-        addDays(directSowDate, -7),
-        `Prep bed "${bed.name}" for ${seed.name}`,
-        `Loosen soil 6–8" deep. Amend with compost. Mark rows ${seed.rowSpacingInches}" apart.`
-      )
-    );
-
-    tasks.push(
-      task(
-        'sow-direct',
-        directSowDate,
-        `Direct sow ${seed.name} in "${bed.name}"`,
-        `Sow seeds ${seed.spacingInches}" apart at proper depth. ` +
-          `Water gently and keep soil moist until germination.` +
-          (seed.successionIntervalDays > 0
-            ? ` Consider succession sowing every ${seed.successionIntervalDays} days.`
-            : '')
-      )
-    );
+  // For stages that have a known plant-in-ground date
+  function resolveInGroundDate(): Date {
+    if (slot.stageDate) return new Date(slot.stageDate + 'T00:00:00');
+    return today;
   }
 
-  // ── Monitoring reminder (3 weeks after establishment) ──
-  const establishDate = seed.canStartIndoors
-    ? addDays(lastFrostDate, 7)
-    : addDays(lastFrostDate, seed.directSowWeeks * 7);
+  // For seeds-started: stageDate is when seeds were sown into tray
+  function resolveTransplantFromStarted(): Date {
+    if (slot.stageDate) {
+      const started = new Date(slot.stageDate + 'T00:00:00');
+      return addDays(started, seed.indoorStartWeeks * 7);
+    }
+    // Fall back: transplant at last frost + 1 week
+    return addDays(lastFrostDate, 7);
+  }
 
-  tasks.push(
-    task(
+  // ── Stage: already in ground (in-ground or store-bought) ──────
+  if (stage === 'in-ground' || stage === 'store-bought') {
+    const plantedDate = resolveInGroundDate();
+
+    tasks.push(task(
       'water',
-      addDays(establishDate, 21),
+      addDays(plantedDate, 21),
       `Monitor & water ${seed.name}`,
       `Check soil moisture, watch for pests, and remove weeds. ` +
         `${seed.needsTrellis ? 'Train vines onto trellis as needed. ' : ''}` +
         `Water deeply but infrequently.`
-    )
-  );
+    ));
 
-  // ── Trim task for applicable plants ──────────────────────
-  if (seed.needsSupport || seed.id === 'tomato' || seed.id === 'basil') {
-    tasks.push(
-      task(
+    if (seed.needsSupport || seed.id === 'tomato' || seed.id === 'basil') {
+      tasks.push(task(
         'trim',
-        addDays(establishDate, 35),
+        addDays(plantedDate, 35),
         `Prune / trim ${seed.name}`,
         seed.id === 'tomato'
           ? 'Remove suckers on indeterminate varieties. Tie main stem to stake.'
           : seed.id === 'basil'
             ? 'Pinch flower buds to keep producing leaves.'
             : 'Remove dead leaves and trim for shape.'
-      )
-    );
+      ));
+    }
+
+    tasks.push(task(
+      'harvest',
+      addDays(plantedDate, seed.daysToMaturity),
+      `Harvest ${seed.name} from "${bed.name}"`,
+      `Days to maturity: ~${seed.daysToMaturity} days from transplant. ` +
+        `Harvest regularly to encourage continued production.` +
+        (seed.successionIntervalDays > 0
+          ? ` Succession sow a new batch for extended harvest.`
+          : '')
+    ));
+
+    return tasks;
   }
 
-  // ── Harvest ────────────────────────────────────────────
-  const harvestDate = seed.canStartIndoors
-    ? addDays(lastFrostDate, 7 + seed.daysToMaturity - seed.indoorStartWeeks * 7 / 2)
-    : addDays(lastFrostDate, seed.directSowWeeks * 7 + seed.daysToMaturity);
+  // ── Stage: ready to transplant ────────────────────────────────
+  if (stage === 'ready-to-transplant') {
+    const transplantDate = slot.stageDate
+      ? new Date(slot.stageDate + 'T00:00:00')
+      : today;
 
-  tasks.push(
-    task(
+    tasks.push(task(
+      'transplant',
+      transplantDate,
+      `Transplant ${seed.name} to "${bed.name}"`,
+      `Seedlings are hardened off and ready. ` +
+        `Plant at ${seed.spacingInches}" spacing. Water in well.` +
+        (seed.needsSupport ? ' Install stakes or cages at planting time.' : '')
+    ));
+
+    tasks.push(task(
+      'water',
+      addDays(transplantDate, 21),
+      `Monitor & water ${seed.name}`,
+      `Check soil moisture, watch for pests, and remove weeds. ` +
+        `${seed.needsTrellis ? 'Train vines onto trellis as needed. ' : ''}` +
+        `Water deeply but infrequently.`
+    ));
+
+    if (seed.needsSupport || seed.id === 'tomato' || seed.id === 'basil') {
+      tasks.push(task(
+        'trim',
+        addDays(transplantDate, 35),
+        `Prune / trim ${seed.name}`,
+        seed.id === 'tomato'
+          ? 'Remove suckers on indeterminate varieties. Tie main stem to stake.'
+          : seed.id === 'basil'
+            ? 'Pinch flower buds to keep producing leaves.'
+            : 'Remove dead leaves and trim for shape.'
+      ));
+    }
+
+    tasks.push(task(
       'harvest',
-      harvestDate,
+      addDays(transplantDate, seed.daysToMaturity),
+      `Harvest ${seed.name} from "${bed.name}"`,
+      `Days to maturity: ~${seed.daysToMaturity} days from transplant. ` +
+        `Harvest regularly to encourage continued production.` +
+        (seed.successionIntervalDays > 0
+          ? ` Succession sow a new batch for extended harvest.`
+          : '')
+    ));
+
+    return tasks;
+  }
+
+  // ── Stage: seeds already started in tray ─────────────────────
+  if (stage === 'seeds-started') {
+    const transplantDate = resolveTransplantFromStarted();
+
+    tasks.push(task(
+      'transplant',
+      transplantDate,
+      `Transplant ${seed.name} to "${bed.name}"`,
+      `Harden seedlings off for 7–10 days before transplanting. ` +
+        `Plant at ${seed.spacingInches}" spacing. Water in well.` +
+        (seed.needsSupport ? ' Install stakes or cages at planting time.' : '')
+    ));
+
+    tasks.push(task(
+      'water',
+      addDays(transplantDate, 21),
+      `Monitor & water ${seed.name}`,
+      `Check soil moisture, watch for pests, and remove weeds. ` +
+        `${seed.needsTrellis ? 'Train vines onto trellis as needed. ' : ''}` +
+        `Water deeply but infrequently.`
+    ));
+
+    if (seed.needsSupport || seed.id === 'tomato' || seed.id === 'basil') {
+      tasks.push(task(
+        'trim',
+        addDays(transplantDate, 35),
+        `Prune / trim ${seed.name}`,
+        seed.id === 'tomato'
+          ? 'Remove suckers on indeterminate varieties. Tie main stem to stake.'
+          : seed.id === 'basil'
+            ? 'Pinch flower buds to keep producing leaves.'
+            : 'Remove dead leaves and trim for shape.'
+      ));
+    }
+
+    tasks.push(task(
+      'harvest',
+      addDays(transplantDate, seed.daysToMaturity - Math.round(seed.indoorStartWeeks * 7 / 2)),
       `Harvest ${seed.name} from "${bed.name}"`,
       `Days to maturity: ~${seed.daysToMaturity} days. ` +
         `Harvest regularly to encourage continued production.` +
         (seed.successionIntervalDays > 0
           ? ` Succession sow a new batch for extended harvest.`
           : '')
-    )
-  );
+    ));
 
-  return tasks;
+    return tasks;
+  }
+
+  // ── Stage: planned or direct-sow (frost-relative schedule) ────
+  if (stage === 'direct-sow' || !seed.canStartIndoors) {
+    const directSowDate = addDays(lastFrostDate, seed.directSowWeeks * 7);
+
+    tasks.push(task(
+      'prep',
+      addDays(directSowDate, -7),
+      `Prep bed "${bed.name}" for ${seed.name}`,
+      `Loosen soil 6–8" deep. Amend with compost. Mark rows ${seed.rowSpacingInches}" apart.`
+    ));
+
+    tasks.push(task(
+      'sow-direct',
+      directSowDate,
+      `Direct sow ${seed.name} in "${bed.name}"`,
+      `Sow seeds ${seed.spacingInches}" apart at proper depth. ` +
+        `Water gently and keep soil moist until germination.` +
+        (seed.successionIntervalDays > 0
+          ? ` Consider succession sowing every ${seed.successionIntervalDays} days.`
+          : '')
+    ));
+
+    tasks.push(task(
+      'water',
+      addDays(directSowDate, 21),
+      `Monitor & water ${seed.name}`,
+      `Check soil moisture, watch for pests, and remove weeds. ` +
+        `Water deeply but infrequently.`
+    ));
+
+    tasks.push(task(
+      'harvest',
+      addDays(lastFrostDate, seed.directSowWeeks * 7 + seed.daysToMaturity),
+      `Harvest ${seed.name} from "${bed.name}"`,
+      `Days to maturity: ~${seed.daysToMaturity} days. ` +
+        `Harvest regularly to encourage continued production.` +
+        (seed.successionIntervalDays > 0
+          ? ` Succession sow a new batch for extended harvest.`
+          : '')
+    ));
+
+    return tasks;
+  }
+
+  // ── Stage: planned with indoor start (default) ────────────────
+  {
+    const indoorStartDate = addDays(lastFrostDate, -(seed.indoorStartWeeks * 7));
+    const transplantDate  = addDays(lastFrostDate, 7);
+
+    tasks.push(task(
+      'prep',
+      addDays(indoorStartDate, -7),
+      `Prep seed trays for ${seed.name}`,
+      `Fill trays with seed-starting mix. Label rows. Have a warm, bright location ready.`
+    ));
+
+    tasks.push(task(
+      'sow-indoor',
+      indoorStartDate,
+      `Start ${seed.name} seeds indoors`,
+      `Sow ${seed.name} seeds ${seed.indoorStartWeeks} weeks before last frost. ` +
+        `Depth: ${Math.round(seed.spacingInches / 8)}"–${Math.round(seed.spacingInches / 6)}". ` +
+        `Keep moist and warm (65–75°F). Germination: 7–14 days.`
+    ));
+
+    tasks.push(task(
+      'transplant',
+      transplantDate,
+      `Transplant ${seed.name} to "${bed.name}"`,
+      `Harden seedlings off for 7–10 days before transplanting. ` +
+        `Plant at ${seed.spacingInches}" spacing. Water in well.` +
+        (seed.needsSupport ? ' Install stakes or cages at planting time.' : '')
+    ));
+
+    tasks.push(task(
+      'water',
+      addDays(transplantDate, 21),
+      `Monitor & water ${seed.name}`,
+      `Check soil moisture, watch for pests, and remove weeds. ` +
+        `${seed.needsTrellis ? 'Train vines onto trellis as needed. ' : ''}` +
+        `Water deeply but infrequently.`
+    ));
+
+    if (seed.needsSupport || seed.id === 'tomato' || seed.id === 'basil') {
+      tasks.push(task(
+        'trim',
+        addDays(transplantDate, 35),
+        `Prune / trim ${seed.name}`,
+        seed.id === 'tomato'
+          ? 'Remove suckers on indeterminate varieties. Tie main stem to stake.'
+          : seed.id === 'basil'
+            ? 'Pinch flower buds to keep producing leaves.'
+            : 'Remove dead leaves and trim for shape.'
+      ));
+    }
+
+    tasks.push(task(
+      'harvest',
+      addDays(lastFrostDate, 7 + seed.daysToMaturity - Math.round(seed.indoorStartWeeks * 7 / 2)),
+      `Harvest ${seed.name} from "${bed.name}"`,
+      `Days to maturity: ~${seed.daysToMaturity} days. ` +
+        `Harvest regularly to encourage continued production.` +
+        (seed.successionIntervalDays > 0
+          ? ` Succession sow a new batch for extended harvest.`
+          : '')
+    ));
+
+    return tasks;
+  }
 }
 
 /**
@@ -164,12 +326,14 @@ export function generateAllTasks(
   lastFrostDate: Date
 ): Task[] {
   const tasks: Task[] = [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   for (const bed of beds) {
     for (const slot of bed.slots) {
       const seed = seedMap.get(slot.plantId);
       if (!seed) continue;
-      tasks.push(...generateTasksForSlot(slot, seed, bed, lastFrostDate));
+      tasks.push(...generateTasksForSlot(slot, seed, bed, lastFrostDate, today));
     }
   }
 
@@ -182,12 +346,11 @@ export function groupTasksByWeek(tasks: Task[]): Map<string, Task[]> {
 
   for (const task of tasks) {
     const date = new Date(task.date + 'T00:00:00');
-    // Monday of that week
-    const day = date.getDay(); // 0 = Sunday
+    const day  = date.getDay();
     const diff = day === 0 ? -6 : 1 - day;
     const monday = addDays(date, diff);
-    const label = monday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    const key = `Week of ${label}`;
+    const label  = monday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const key    = `Week of ${label}`;
 
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key)!.push(task);
@@ -197,27 +360,27 @@ export function groupTasksByWeek(tasks: Task[]): Map<string, Task[]> {
 }
 
 export const TASK_ICONS: Record<TaskType, string> = {
-  prep: '🔧',
+  prep:         '🔧',
   'sow-indoor': '🌱',
   'sow-direct': '🌾',
-  transplant: '🪴',
-  water: '💧',
-  fertilize: '🌿',
-  trim: '✂️',
-  harvest: '🧺',
-  restart: '🔄',
-  custom: '📌',
+  transplant:   '🪴',
+  water:        '💧',
+  fertilize:    '🌿',
+  trim:         '✂️',
+  harvest:      '🧺',
+  restart:      '🔄',
+  custom:       '📌',
 };
 
 export const TASK_LABELS: Record<TaskType, string> = {
-  prep: 'Prep',
+  prep:         'Prep',
   'sow-indoor': 'Start Indoors',
   'sow-direct': 'Direct Sow',
-  transplant: 'Transplant',
-  water: 'Monitor & Water',
-  fertilize: 'Fertilize',
-  trim: 'Trim / Prune',
-  harvest: 'Harvest',
-  restart: 'Restart',
-  custom: 'Custom',
+  transplant:   'Transplant',
+  water:        'Monitor & Water',
+  fertilize:    'Fertilize',
+  trim:         'Trim / Prune',
+  harvest:      'Harvest',
+  restart:      'Restart',
+  custom:       'Custom',
 };

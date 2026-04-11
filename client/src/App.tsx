@@ -10,6 +10,7 @@ import { Seeds } from './pages/Seeds';
 import { ActivityLog } from './pages/ActivityLog';
 import { Settings } from './pages/Settings';
 import { Seasons } from './pages/Seasons';
+import { Dashboard } from './pages/Dashboard';
 
 export default function App() {
   const { init, settings, loading } = useGardenStore();
@@ -50,13 +51,14 @@ export default function App() {
             ) : (
               <>
                 <Routes>
+                  <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/planner"  element={<Planner />} />
                   <Route path="/calendar" element={<Calendar />} />
                   <Route path="/seeds"    element={<Seeds />} />
                   <Route path="/log"      element={<ActivityLog />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/seasons"  element={<Seasons />} />
-                  <Route path="*"         element={<Navigate to="/planner" replace />} />
+                  <Route path="*"         element={<Navigate to="/dashboard" replace />} />
                 </Routes>
                 <Nav />
               </>

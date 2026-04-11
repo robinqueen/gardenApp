@@ -35,6 +35,18 @@ export type SunExposure = 'full-sun' | 'partial-sun' | 'shade';
  */
 export type NorthEdge = 'top' | 'bottom' | 'left' | 'right';
 
+/**
+ * The current growth stage of a planting slot.
+ * This drives which tasks get auto-generated and from what date.
+ */
+export type PlantStage =
+  | 'planned'               // seeds not yet started — full cycle from frost-date schedule
+  | 'seeds-started'         // seeds already in trays; stageDate = when they were started
+  | 'ready-to-transplant'   // hardened off and ready to go in ground
+  | 'direct-sow'            // will direct sow at the frost-relative date
+  | 'in-ground'             // already transplanted; stageDate = when planted
+  | 'store-bought';         // purchased starter plant; stageDate = when planted
+
 /** How tall a plant grows at maturity — affects shadow casting warnings. */
 export type HeightCategory = 'low' | 'medium' | 'tall' | 'vine';
 
@@ -65,6 +77,21 @@ export interface PlantSlot {
   successionGroupId?: string;
   /** 0 = on base schedule. +N = N weeks offset for succession planting. */
   weekOffset: number;
+  /**
+   * What stage this planting is currently at.
+   * Controls which tasks are generated and from what anchor date.
+   * Defaults to 'planned' if absent (full frost-relative schedule).
+   */
+  stage?: PlantStage;
+  /**
+   * ISO date (YYYY-MM-DD) relevant to the stage:
+   *   seeds-started      → date seeds were sown into tray
+   *   in-ground          → date plant went into the ground
+   *   store-bought       → date purchased/planted
+   *   ready-to-transplant → date hardened off (optional, defaults to today)
+   * Not used for 'planned' or 'direct-sow'.
+   */
+  stageDate?: string;
 }
 
 export interface Bed {

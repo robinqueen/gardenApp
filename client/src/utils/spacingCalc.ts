@@ -1,4 +1,4 @@
-import type { CatalogSeed, PlantSlot } from '../types';
+import type { CatalogSeed, PlantSlot, PlantStage } from '../types';
 
 // ─── Rectangle Dimensions ─────────────────────────────────────
 
@@ -56,7 +56,9 @@ export function buildSlot(
   seed: CatalogSeed,
   cellX: number,
   cellY: number,
-  weekOffset = 0
+  weekOffset = 0,
+  stage: PlantStage = 'planned',
+  stageDate?: string
 ): Omit<PlantSlot, 'id'> {
   return {
     cellX,
@@ -66,6 +68,8 @@ export function buildSlot(
     lengthCells: slotLengthCells(seed),
     plantsPerSqFt: plantsPerSqFt(seed),
     weekOffset,
+    stage,
+    stageDate,
   };
 }
 

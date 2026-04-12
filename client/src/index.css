@@ -3059,3 +3059,333 @@ ul { list-style: none; }
   border: 1px solid var(--color-danger) !important;
   background: #fff5f5 !important;
 }
+
+/* ─── Seed Start Plan ─────────────────────────────────────────── */
+
+.ssp-root {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Summary strip */
+.ssp-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 0.5rem;
+}
+.ssp-summary-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+}
+.ssp-summary-num {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  line-height: 1;
+}
+.ssp-summary-lbl {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  letter-spacing: 0.02em;
+}
+.ssp-summary-div {
+  width: 1px;
+  height: 2rem;
+  background: var(--color-border);
+}
+
+/* tray-config styles removed — tray selection was removed from the UI */
+/* ── Expandable explanation ─────────────────────────────────── */
+.ssp-explain {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+}
+.ssp-explain summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--color-primary-dark);
+  user-select: none;
+  padding: 0.1rem 0;
+}
+.ssp-explain-body {
+  padding-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+.ssp-explain-body ul {
+  padding-left: 1.1rem;
+  list-style: disc;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.ssp-explain-body strong { color: var(--color-text); }
+
+/* ── Batch cards ────────────────────────────────────────────── */
+.ssp-batches {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.ssp-batch-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.ssp-batch-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 0.75rem;
+  width: 100%;
+  text-align: left;
+  background: none;
+  cursor: pointer;
+  gap: 0.5rem;
+}
+.ssp-batch-header:active { background: var(--color-surface-alt); }
+/* Batch header layout */
+.ssp-batch-header-main {
+  flex: 1;
+  min-width: 0;
+}
+.ssp-batch-chevron {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+/* Date row — calendar date is the hero */
+.ssp-batch-date-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.ssp-batch-date-cal {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--color-primary-dark);
+  line-height: 1;
+}
+.ssp-batch-date-unknown {
+  font-size: 0.85rem;
+  color: var(--color-accent);
+}
+.ssp-batch-date-rel {
+  font-size: 0.73rem;
+  color: var(--color-text-muted);
+}
+.ssp-batch-meta {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-top: 0.25rem;
+}
+.ssp-batch-meta strong { color: var(--color-text); }
+
+/* Frost notice banner */
+.ssp-frost-notice {
+  background: var(--color-primary-light);
+  border: 1px solid #b2dfb8;
+  border-radius: var(--radius-md);
+  padding: 0.55rem 0.75rem;
+  font-size: 0.8rem;
+  color: var(--color-primary-dark);
+  line-height: 1.4;
+}
+
+/* ── Options row (seeds/cell + buffer) ──────────────────────── */
+.ssp-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.55rem 0.75rem;
+}
+.ssp-option-group {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.ssp-option-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ── Collapsible guide/config buttons ───────────────────────── */
+.ssp-config-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  text-align: left;
+}
+
+/* ── How-it-works guide ─────────────────────────────────────── */
+.ssp-guide {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+.ssp-guide-step {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  border-bottom: 1px solid var(--color-border);
+}
+.ssp-guide-step:last-child { border-bottom: none; }
+.ssp-guide-step--highlight {
+  background: #fffbf0;
+  border-left: 3px solid var(--color-accent);
+}
+.ssp-guide-num {
+  width: 1.5rem;
+  height: 1.5rem;
+  min-width: 1.5rem;
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin-top: 0.15rem;
+}
+.ssp-guide-step--highlight .ssp-guide-num { background: var(--color-accent); }
+.ssp-guide-step strong { color: var(--color-text); display: block; margin-bottom: 0.15rem; }
+.ssp-guide-step p { color: var(--color-text-muted); margin: 0 0 0.35rem; }
+.ssp-guide-step p:last-child { margin-bottom: 0; }
+
+/* ── Batch body ─────────────────────────────────────────────── */
+.ssp-batch-body {
+  border-top: 1px solid var(--color-border);
+  padding: 0.65rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* ── Entry table ────────────────────────────────────────────── */
+.ssp-entry-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.83rem;
+}
+.ssp-entry-table thead th {
+  text-align: left;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  padding: 0 0.4rem 0.35rem;
+  border-bottom: 1px solid var(--color-border);
+}
+.ssp-entry-table thead th.ssp-col-num { text-align: right; }
+.ssp-entry-table tbody tr:nth-child(even) td { background: var(--color-surface-alt); }
+.ssp-entry-table tbody td {
+  padding: 0.35rem 0.4rem;
+  vertical-align: middle;
+}
+.ssp-entry-table tfoot td {
+  padding: 0.35rem 0.4rem;
+  border-top: 2px solid var(--color-border);
+}
+.ssp-col-icon { font-size: 1.1rem; width: 1.8rem; padding-right: 0 !important; }
+.ssp-col-num  { text-align: right; white-space: nowrap; }
+.ssp-col-want  { color: var(--color-text-muted); font-size: 0.8rem; }
+.ssp-col-cells { font-weight: 700; color: var(--color-primary-dark); }
+.ssp-col-seeds { color: var(--color-text-muted); font-size: 0.8rem; }
+.ssp-total-cells {
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: var(--color-primary-dark);
+}
+.ssp-entry-name {
+  font-size: 0.83rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.ssp-entry-category {
+  font-size: 0.68rem;
+  color: var(--color-text-muted);
+}
+
+/* ── Aside sections (direct-sow / already started) ──────────── */
+.ssp-aside-section {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.ssp-aside-header {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: var(--color-surface-alt);
+  color: var(--color-text-muted);
+  letter-spacing: 0.02em;
+}
+.ssp-aside-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.5rem 0.75rem;
+}
+.ssp-aside-item {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.2rem 0.5rem;
+}
+.ssp-aside-name { font-weight: 600; }
+.ssp-aside-count { color: var(--color-text-muted); }
+
+/* ── Seeds-per-cell toggle row ─────────────────────────────── */
+/* ── Entry math labels ───────────────────────────────────────── */
+.ssp-entry-cells {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+.ssp-entry-seeds2 {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  background: #fff8e1;
+  border: 1px solid var(--color-accent);
+  border-radius: 999px;
+  padding: 0.05rem 0.35rem;
+}
+

@@ -131,16 +131,21 @@ export class LocalAdapter implements StorageAdapter {
   }
 
   async resetAll(): Promise<void> {
-    await db.transaction('rw', db.settings, db.gardens, db.userSeeds, db.tasks, db.activityLogs, db.seasons, db.customSeeds, async () => {
-      await Promise.all([
-        db.settings.clear(),
-        db.gardens.clear(),
-        db.userSeeds.clear(),
-        db.tasks.clear(),
-        db.activityLogs.clear(),
-        db.seasons.clear(),
-        db.customSeeds.clear(),
-      ]);
-    });
+    // Pass tables as an array to avoid the 7-argument TypeScript overload limit
+    await db.transaction(
+      'rw',
+      [db.settings, db.gardens, db.userSeeds, db.tasks, db.activityLogs, db.seasons, db.customSeeds],
+      async () => {
+        await Promise.all([
+          db.settings.clear(),
+          db.gardens.clear(),
+          db.userSeeds.clear(),
+          db.tasks.clear(),
+          db.activityLogs.clear(),
+          db.seasons.clear(),
+          db.customSeeds.clear(),
+        ]);
+      }
+    );
   }
 }

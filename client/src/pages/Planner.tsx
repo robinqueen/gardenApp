@@ -5,6 +5,7 @@ import { useGardenStore } from '../store/useGardenStore';
 import { BedGrid } from '../components/BedGrid';
 import { GardenPlot } from '../components/GardenPlot';
 import { Garden3DView } from '../components/Garden3DView';
+import { SeedStartPlan } from '../components/SeedStartPlan';
 import { SEED_CATALOG } from '../catalog/seeds';
 import { NORTH_EDGE_OPTIONS, sunLabel, SUN_ICONS } from '../utils/sunWarnings';
 import type { Bed, BedType, SunExposure, NorthEdge, TrellisType, PlotFeature, PlotFeatureType } from '../types';
@@ -83,7 +84,7 @@ const COMMON_PERENNIALS = [
 
 // ─── View ─────────────────────────────────────────────────────
 
-type PlannerView = 'plot' | 'beds' | '3d';
+type PlannerView = 'plot' | 'beds' | '3d' | 'starts';
 
 export function Planner() {
   const navigate = useNavigate();
@@ -288,6 +289,9 @@ export function Planner() {
         <button className={`view-toggle-btn${view === 'beds' ? ' active' : ''}`} onClick={() => setView('beds')}>
           🌿 Beds
         </button>
+        <button className={`view-toggle-btn${view === 'starts' ? ' active' : ''}`} onClick={() => setView('starts')}>
+          🌱 Starts
+        </button>
         <button className={`view-toggle-btn${view === '3d' ? ' active' : ''}`} onClick={() => setView('3d')}>
           🌳 3D
         </button>
@@ -304,6 +308,9 @@ export function Planner() {
       {view === '3d' && (
         <Garden3DView onExit={() => setView('plot')} />
       )}
+
+      {/* ── SEED STARTS VIEW ── */}
+      {view === 'starts' && <SeedStartPlan />}
 
       {/* ── BEDS VIEW ── */}
       {view === 'beds' && (

@@ -11,12 +11,13 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection")
         ?? "Data Source=gardenapp.db"));
 
-// Allow the React dev server (port 3000) and any same-origin PWA requests
+// Allow the React dev server and any same-origin PWA requests.
+// X-Household-Id is a custom header so it must be explicitly allowed.
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
         policy
-            .WithOrigins("http://localhost:3000", "http://localhost:4173")
-            .AllowAnyHeader()
+            .WithOrigins("http://localhost:3000", "http://localhost:4173", "http://localhost:5173")
+            .AllowAnyHeader()   // includes X-Household-Id
             .AllowAnyMethod()));
 
 builder.Services.AddOpenApi();
@@ -45,12 +46,12 @@ app.MapSettingsEndpoints();
 app.MapGardenEndpoints();
 app.MapActivityEndpoints();
 
-// ─── Database Migration ────────────────────────────────────────
+// ─── Database Initialisation ───────────────────────────────────
+// EnsureCreated + safe ALTER TABLE for additive column migrations.
+// No EF migration files required.
 
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.EnsureCreated();
-}
+using var scope = app.Services.CreateScope();
+var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+await DatabaseInitializer.InitializeAsync(db);
 
 app.Run();

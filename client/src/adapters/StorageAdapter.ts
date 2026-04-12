@@ -1,4 +1,4 @@
-import type { Settings, Garden, UserSeed, Task, ActivityLog, GardenSeason } from '../types';
+import type { Settings, Garden, UserSeed, Task, ActivityLog, GardenSeason, CatalogSeed } from '../types';
 
 /**
  * Contract that both LocalAdapter (Dexie/IndexedDB) and RemoteAdapter (REST API)
@@ -30,9 +30,22 @@ export interface StorageAdapter {
   saveActivityLog(log: ActivityLog): Promise<void>;
   deleteActivityLog(id: string): Promise<void>;
 
+  // ── Custom Seeds ──────────────────────────────────────────
+  /** User-created seed varieties not in the built-in catalog. */
+  getCustomSeeds(): Promise<CatalogSeed[]>;
+  saveCustomSeed(seed: CatalogSeed): Promise<void>;
+  deleteCustomSeed(id: string): Promise<void>;
+
   // ── Season Archive ────────────────────────────────────────
   getSeasons(): Promise<GardenSeason[]>;
   saveSeason(season: GardenSeason): Promise<void>;
+
+  /**
+   * Wipe all user data — garden, tasks, activity logs, seeds, seasons, settings.
+   * Used by "Reset / Start Fresh". Implementations should do this as efficiently
+   * as possible (e.g. table.clear() in Dexie, or DELETE FROM in SQLite).
+   */
+  resetAll(): Promise<void>;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -42,4 +55,6 @@ export const DEFAULT_SETTINGS: Settings = {
   storageMode: 'local',
   apiBaseUrl: '',
   setupComplete: false,
+  notificationsEnabled: false,
+  weeklyDigestEnabled: false,
 };

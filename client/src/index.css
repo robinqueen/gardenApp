@@ -884,10 +884,12 @@ ul { list-style: none; }
 .bed-sun-header {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
   justify-content: space-between;
   font-size: 0.8rem;
   color: var(--color-text-muted);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
   font-weight: 600;
 }
 
@@ -1535,6 +1537,78 @@ ul { list-style: none; }
   line-height: 1;
 }
 
+/* ─── Picker category groups ──────────────────────────────────── */
+
+.picker-category-group {
+  margin-bottom: 0.25rem;
+}
+
+.picker-category-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0.5rem;
+  background: var(--color-surface-alt);
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin-bottom: 0.3rem;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.picker-category-count {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: var(--color-border);
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+  min-width: 1.5rem;
+  text-align: center;
+}
+
+/* Days-to-maturity micro label */
+.picker-item .p-meta {
+  font-size: 0.62rem;
+  color: var(--color-text-muted);
+  margin-top: 1px;
+}
+
+/* Custom variety badge (pencil icon) */
+.picker-item .p-custom-badge {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  font-size: 0.6rem;
+  color: var(--color-accent);
+  line-height: 1;
+}
+
+/* Custom variety card tint */
+.picker-item.picker-custom {
+  border-color: var(--color-accent);
+  background: #fffbf0;
+}
+
+/* Category badge shown in the variety detail header */
+.picker-category-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--color-primary-dark);
+  background: var(--color-primary-light);
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+  letter-spacing: 0.02em;
+}
+
 /* ─── Frost Countdown Banner ──────────────────────────────────── */
 
 .frost-banner {
@@ -2089,4 +2163,899 @@ ul { list-style: none; }
   .seed-grid {
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   }
+}
+
+/* ─── Plant Stage Selector ───────────────────────────────────── */
+
+.stage-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+
+.stage-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.6rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.78rem;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.stage-btn:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-dim, rgba(76,175,80,0.08));
+}
+
+.stage-btn.selected {
+  border-color: var(--color-primary);
+  background: var(--color-primary-dim, rgba(76,175,80,0.12));
+  font-weight: 600;
+}
+
+.stage-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.stage-label {
+  line-height: 1.2;
+}
+
+/* ─── Virtual Joystick ───────────────────────────────────────── */
+
+.joystick-base {
+  position: absolute;
+  bottom: 5.5rem;
+  left: 1.25rem;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+  user-select: none;
+  z-index: 30;
+  backdrop-filter: blur(4px);
+}
+
+.joystick-knob {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  pointer-events: none;
+  transition: transform 0.05s;
+  will-change: transform;
+}
+
+/* ─── Cell Stage Badge ───────────────────────────────────────── */
+
+.cell-stage {
+  position: absolute;
+  bottom: 1px;
+  right: 2px;
+  font-size: 0.6rem;
+  line-height: 1;
+  opacity: 0.9;
+}
+
+/* ─── Dashboard ──────────────────────────────────────────────── */
+
+.dash-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.dash-badge {
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.dash-frost {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.dash-frost-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  flex: 1;
+  min-width: 140px;
+}
+
+.dash-frost-pill.past {
+  opacity: 0.6;
+}
+
+.dash-frost-days {
+  margin-left: auto;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.dash-section {
+  margin-bottom: 1rem;
+}
+
+.dash-section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin-bottom: 0.4rem;
+}
+
+.dash-section-label.overdue {
+  color: var(--color-danger);
+}
+
+/* Task rows */
+.dash-task-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  margin-bottom: 0.35rem;
+}
+
+.dash-task-row.past {
+  border-color: var(--color-danger);
+  background: rgba(192, 57, 43, 0.04);
+}
+
+.dash-task-check {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.dash-task-check:hover {
+  border-color: var(--color-primary);
+  background: rgba(76,175,80,0.1);
+}
+
+.dash-task-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.dash-task-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.dash-task-title {
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dash-task-date {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.dash-task-date-compact {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.overdue-text { color: var(--color-danger) !important; font-weight: 600; }
+.today-text   { color: var(--color-primary) !important; font-weight: 600; }
+
+/* Plant rows */
+.dash-plant-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  margin-bottom: 0.35rem;
+}
+
+.dash-plant-icon {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.dash-plant-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.dash-harvest-tag {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  white-space: nowrap;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.dash-harvest-tag.soon {
+  background: rgba(76,175,80,0.12);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+/* Quick log */
+.dash-quicklog-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+}
+
+@media (min-width: 380px) {
+  .dash-quicklog-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+.dash-quicklog-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.55rem 0.25rem;
+  border-radius: var(--radius);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.dash-quicklog-btn:hover {
+  border-color: var(--color-primary);
+  background: rgba(76,175,80,0.08);
+}
+
+.dash-quicklog-btn.confirmed {
+  border-color: var(--color-primary);
+  background: rgba(76,175,80,0.15);
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.dash-quicklog-btn span:first-child {
+  font-size: 1.3rem;
+}
+
+/* Shortcut row */
+.dash-shortcuts {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* ─── Planting Window Badge ──────────────────────────────────── */
+
+.pwb-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  white-space: nowrap;
+  margin-top: 0.25rem;
+}
+
+.pwb-dot {
+  position: absolute;
+  bottom: 1px;
+  left: 2px;
+  font-size: 0.55rem;
+  line-height: 1;
+  z-index: 2;
+}
+
+.pwb-green  { background: rgba(56,142,60,0.15);  color: #2e7d32; border: 1px solid rgba(56,142,60,0.3);  }
+.pwb-yellow { background: rgba(245,127,23,0.15); color: #e65100; border: 1px solid rgba(245,127,23,0.3); }
+.pwb-red    { background: rgba(198,40,40,0.15);  color: #b71c1c; border: 1px solid rgba(198,40,40,0.3);  }
+.pwb-blue   { background: rgba(21,101,192,0.15); color: #0d47a1; border: 1px solid rgba(21,101,192,0.3); }
+.pwb-gray   { background: rgba(97,97,97,0.1);    color: #424242; border: 1px solid rgba(97,97,97,0.2);   }
+
+/* ─── Harvest Yield ──────────────────────────────────────────── */
+
+.yield-input-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.log-yield {
+  font-size: 0.75rem;
+  color: var(--color-primary);
+  font-weight: 600;
+  margin-top: 0.1rem;
+}
+
+.yield-summary-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.yield-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.85rem;
+}
+
+.yield-row:last-child {
+  border-bottom: none;
+}
+
+.yield-icon { font-size: 1.1rem; }
+.yield-crop { flex: 1; }
+.yield-total { font-weight: 700; color: var(--color-primary); }
+
+.dash-overdue-harvest {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-danger);
+  background: rgba(192,57,43,0.1);
+  border: 1px solid rgba(192,57,43,0.3);
+  border-radius: 999px;
+  padding: 0.1rem 0.4rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ─── Share Link ─────────────────────────────────────────────── */
+
+.share-link-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.share-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.share-logo {
+  font-size: 2.5rem;
+  flex-shrink: 0;
+}
+
+.share-stats {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.share-stat {
+  flex: 1;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.share-stat-n {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  line-height: 1;
+}
+
+.share-stat-label {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.2rem;
+}
+
+.share-frost {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-size: 0.83rem;
+  color: var(--color-text-muted);
+  margin-bottom: 1rem;
+}
+
+/* ─── Weather Feed ───────────────────────────────────────────── */
+
+.weather-block {
+  margin-bottom: 1rem;
+}
+
+.weather-loading {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  padding: 0.4rem 0;
+  margin-bottom: 0.75rem;
+}
+
+.weather-banner {
+  font-size: 0.8rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius);
+  margin-bottom: 0.4rem;
+  border: 1px solid transparent;
+}
+
+.weather-banner--frost {
+  background: rgba(198, 40, 40, 0.08);
+  border-color: rgba(198, 40, 40, 0.25);
+  color: #b71c1c;
+}
+
+.weather-banner--rain {
+  background: rgba(21, 101, 192, 0.08);
+  border-color: rgba(21, 101, 192, 0.25);
+  color: #0d47a1;
+}
+
+.weather-strip {
+  display: flex;
+  gap: 0.25rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+  scrollbar-width: none;
+}
+
+.weather-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.weather-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  flex: 1;
+  min-width: 44px;
+  padding: 0.4rem 0.2rem;
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.weather-day--today {
+  border-color: var(--color-primary);
+  background: rgba(76, 175, 80, 0.06);
+}
+
+.weather-day-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.weather-day-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.weather-day-high {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.weather-day-low {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+.weather-day-rain {
+  font-size: 0.6rem;
+  line-height: 1;
+}
+
+/* ─── Notifications Settings ─────────────────────────────────── */
+
+/* Notifications section uses existing card/form styles — no additional CSS needed */
+/* Checkbox label alignment */
+.form-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ─── Succession Gap Detector ────────────────────────────────── */
+
+.gap-panel {
+  margin-bottom: 1rem;
+}
+
+.gap-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.gap-panel-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.gap-panel-count {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+}
+
+.gap-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  margin-bottom: 0.4rem;
+  overflow: hidden;
+}
+
+.gap-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0.75rem;
+}
+
+.gap-card-bed {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.gap-card-dates {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.1rem;
+}
+
+.gap-days-badge {
+  background: rgba(76,175,80,0.12);
+  border: 1px solid rgba(76,175,80,0.3);
+  color: var(--color-primary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.05rem 0.35rem;
+  border-radius: 999px;
+}
+
+.gap-suggestions {
+  padding: 0 0.75rem 0.6rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.gap-suggestions-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  margin: 0.4rem 0 0.35rem;
+}
+
+.gap-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.gap-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.gap-chip-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.gap-chip-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.gap-chip-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.gap-chip-meta {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+}
+
+/* ─── Household Sync (Settings page) ─────────────────────────── */
+
+.household-code-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.household-code {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--color-primary-dark);
+  background: var(--color-primary-light);
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  padding: 0.4rem 0.9rem;
+  flex: 1;
+  text-align: center;
+}
+
+/* ─── Bed form: unit toggle (ft/in) ─────────────────────────── */
+
+.form-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+}
+
+.unit-toggle {
+  display: flex;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.unit-btn {
+  padding: 0.2rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.unit-btn.active {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+/* ─── Quick pick grid (feature form) ────────────────────────── */
+
+.quick-pick-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.25rem;
+}
+
+.quick-pick-btn {
+  padding: 0.3rem 0.65rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.quick-pick-btn.active,
+.quick-pick-btn:hover {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+}
+
+/* ─── BedGrid: trellis badge + dimension hint ───────────────── */
+
+.bed-trellis-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-primary-dark);
+  background: var(--color-primary-light);
+  border: 1px solid var(--color-primary);
+  border-radius: 99px;
+  padding: 0.1rem 0.5rem;
+}
+
+.bed-dims-hint {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0.4rem;
+  text-align: center;
+}
+
+/* ─── GardenPlot: trellis SVG overlay ───────────────────────── */
+
+.plot-trellis-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.plot-bed--trellis {
+  box-shadow: 0 0 0 2px #2c5f34aa, 0 0 0 4px #a5d6a780;
+}
+
+.plot-bed-trellis-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  opacity: 0.85;
+  line-height: 1;
+  margin-bottom: 0.15rem;
+}
+
+/* ─── GardenPlot: in-ground plant (PlotFeature) markers ─────── */
+
+.plot-feature-marker {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: grab;
+  touch-action: none;
+  z-index: 10;
+  user-select: none;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+  transition: filter 0.15s;
+}
+
+.plot-feature-marker:active {
+  cursor: grabbing;
+  filter: drop-shadow(0 3px 6px rgba(0,0,0,0.4));
+}
+
+.plot-feature-marker-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+  background: rgba(255,255,255,0.85);
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #7b1fa2;
+}
+
+.plot-feature-marker-label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: #4a0072;
+  background: rgba(255,255,255,0.9);
+  border-radius: 3px;
+  padding: 1px 4px;
+  white-space: nowrap;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+/* ─── Planner: in-ground plant list rows ────────────────────── */
+
+.plot-feature-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.plot-feature-row:last-child {
+  border-bottom: none;
+}
+
+.plot-feature-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+  width: 2rem;
+  text-align: center;
+}
+
+.plot-feature-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.plot-feature-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.plot-feature-meta {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-top: 0.1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ─── Danger zone (Settings page) ───────────────────────────── */
+
+.danger-zone {
+  border: 1px solid var(--color-danger) !important;
+  background: #fff5f5 !important;
 }

@@ -1,47 +1,108 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 import { useGardenStore } from '../store/useGardenStore';
 import { BedGrid } from '../components/BedGrid';
 import { GardenPlot } from '../components/GardenPlot';
 import { Garden3DView } from '../components/Garden3DView';
 import { SEED_CATALOG } from '../catalog/seeds';
 import { NORTH_EDGE_OPTIONS, sunLabel, SUN_ICONS } from '../utils/sunWarnings';
-import type { Bed, BedType, SunExposure, NorthEdge } from '../types';
-import { v4 as uuidv4 } from 'uuid';
+import type { Bed, BedType, SunExposure, NorthEdge, TrellisType, PlotFeature, PlotFeatureType } from '../types';
 
-// ─── Default bed form values ──────────────────────────────────
+// ─── Bed Form ─────────────────────────────────────────────────
 
 interface BedFormValues {
   name: string;
-  widthFt: string;
-  lengthFt: string;
+  widthVal: string;   // raw number the user types
+  lengthVal: string;
+  unit: 'ft' | 'in';
   type: BedType;
   sunExposure: SunExposure;
   northEdge: NorthEdge;
+  trellisType: TrellisType;
+  trellisPartnerId: string;
 }
 
 const DEFAULT_BED_FORM: BedFormValues = {
   name: '',
-  widthFt: '4',
-  lengthFt: '8',
+  widthVal: '4',
+  lengthVal: '8',
+  unit: 'ft',
   type: 'raised',
   sunExposure: 'full-sun',
   northEdge: 'top',
+  trellisType: 'none',
+  trellisPartnerId: '',
 };
+
+/** Convert a user-entered dimension + unit to decimal feet. */
+function toFeet(val: string, unit: 'ft' | 'in'): number {
+  const n = parseFloat(val) || 0;
+  return unit === 'in' ? n / 12 : n;
+}
+
+// ─── Plot Feature Form ────────────────────────────────────────
+
+interface FeatureFormValues {
+  name: string;
+  icon: string;
+  type: PlotFeatureType;
+  plantedDate: string;
+  notes: string;
+}
+
+const DEFAULT_FEATURE_FORM: FeatureFormValues = {
+  name: '',
+  icon: '🌿',
+  type: 'perennial-berry',
+  plantedDate: '',
+  notes: '',
+};
+
+const FEATURE_TYPE_OPTIONS: { value: PlotFeatureType; label: string; icon: string }[] = [
+  { value: 'perennial-vine',   label: 'Perennial Vine',    icon: '🥝' },
+  { value: 'perennial-berry',  label: 'Berry Bush',        icon: '🫐' },
+  { value: 'perennial-fruit',  label: 'Fruit Tree/Plant',  icon: '🍓' },
+  { value: 'tree',             label: 'Tree',              icon: '🌳' },
+  { value: 'shrub',            label: 'Shrub',             icon: '🌿' },
+  { value: 'herb-perennial',   label: 'Perennial Herb',    icon: '🌱' },
+];
+
+const COMMON_PERENNIALS = [
+  { name: 'Kiwi Vine',   icon: '🥝', type: 'perennial-vine'  as PlotFeatureType },
+  { name: 'Raspberry',   icon: '🍇', type: 'perennial-berry' as PlotFeatureType },
+  { name: 'Blueberry',   icon: '🫐', type: 'perennial-berry' as PlotFeatureType },
+  { name: 'Strawberry',  icon: '🍓', type: 'perennial-fruit' as PlotFeatureType },
+  { name: 'Blackberry',  icon: '🍇', type: 'perennial-berry' as PlotFeatureType },
+  { name: 'Apple Tree',  icon: '🍎', type: 'tree'            as PlotFeatureType },
+  { name: 'Pear Tree',   icon: '🍐', type: 'tree'            as PlotFeatureType },
+  { name: 'Rhubarb',     icon: '🌿', type: 'perennial-fruit' as PlotFeatureType },
+  { name: 'Asparagus',   icon: '🌿', type: 'herb-perennial'  as PlotFeatureType },
+  { name: 'Lavender',    icon: '💜', type: 'herb-perennial'  as PlotFeatureType },
+];
+
+// ─── View ─────────────────────────────────────────────────────
 
 type PlannerView = 'plot' | 'beds' | '3d';
 
 export function Planner() {
   const navigate = useNavigate();
-  const { garden, addBed, updateBed, deleteBed } = useGardenStore();
+  const { garden, addBed, updateBed, deleteBed, addPlotFeature, updatePlotFeature, removePlotFeature } = useGardenStore();
 
   const [view, setView] = useState<PlannerView>('plot');
   const [selectedBedId, setSelectedBedId] = useState<string | null>(
     garden?.beds[0]?.id ?? null
   );
+
+  // ── Bed form ──────────────────────────────────────────────
   const [showBedForm, setShowBedForm] = useState(false);
   const [editingBed, setEditingBed] = useState<Bed | null>(null);
   const [bedForm, setBedForm] = useState<BedFormValues>(DEFAULT_BED_FORM);
+
+  // ── Plot feature form ─────────────────────────────────────
+  const [showFeatureForm, setShowFeatureForm] = useState(false);
+  const [editingFeature, setEditingFeature] = useState<PlotFeature | null>(null);
+  const [featureForm, setFeatureForm] = useState<FeatureFormValues>(DEFAULT_FEATURE_FORM);
 
   function openBedFromPlot(bedId: string) {
     setSelectedBedId(bedId);
@@ -49,7 +110,10 @@ export function Planner() {
   }
 
   const beds = garden?.beds ?? [];
+  const plotFeatures = garden?.plotFeatures ?? [];
   const selectedBed = beds.find((b) => b.id === selectedBedId) ?? beds[0] ?? null;
+
+  // ── Bed form handlers ────────────────────────────────────
 
   function openAddForm() {
     setBedForm(DEFAULT_BED_FORM);
@@ -58,26 +122,37 @@ export function Planner() {
   }
 
   function openEditForm(bed: Bed) {
+    // Detect if stored value is likely already in inches (>20 suggests inches)
+    const storedW = bed.widthFt;
+    const storedL = bed.lengthFt;
+    const isLikelyInches = storedW > 20 || storedL > 20;
     setBedForm({
       name: bed.name,
-      widthFt: String(bed.widthFt),
-      lengthFt: String(bed.lengthFt),
+      widthVal:  isLikelyInches ? String(Math.round(storedW * 12)) : String(storedW),
+      lengthVal: isLikelyInches ? String(Math.round(storedL * 12)) : String(storedL),
+      unit: isLikelyInches ? 'in' : 'ft',
       type: bed.type,
       sunExposure: bed.sunExposure,
       northEdge: bed.northEdge,
+      trellisType: bed.trellisType ?? 'none',
+      trellisPartnerId: bed.trellisPartnerId ?? '',
     });
     setEditingBed(bed);
     setShowBedForm(true);
   }
 
   async function handleSaveBed() {
+    const wFt = toFeet(bedForm.widthVal, bedForm.unit);
+    const lFt = toFeet(bedForm.lengthVal, bedForm.unit);
     const data = {
-      name: bedForm.name.trim(),
-      widthFt: Math.max(1, Math.min(20, parseInt(bedForm.widthFt) || 4)),
-      lengthFt: Math.max(1, Math.min(20, parseInt(bedForm.lengthFt) || 8)),
-      type: bedForm.type,
-      sunExposure: bedForm.sunExposure,
-      northEdge: bedForm.northEdge,
+      name:            bedForm.name.trim(),
+      widthFt:         Math.max(0.5, Math.min(40, Math.round(wFt * 100) / 100)),
+      lengthFt:        Math.max(0.5, Math.min(40, Math.round(lFt * 100) / 100)),
+      type:            bedForm.type,
+      sunExposure:     bedForm.sunExposure,
+      northEdge:       bedForm.northEdge,
+      trellisType:     bedForm.trellisType,
+      trellisPartnerId: bedForm.trellisPartnerId || undefined,
     };
     if (!data.name) return;
 
@@ -100,23 +175,95 @@ export function Planner() {
     }
   }
 
-  if (beds.length === 0) {
+  // ── Feature form handlers ─────────────────────────────────
+
+  function openAddFeature() {
+    setFeatureForm(DEFAULT_FEATURE_FORM);
+    setEditingFeature(null);
+    setShowFeatureForm(true);
+  }
+
+  function openEditFeature(feature: PlotFeature) {
+    setFeatureForm({
+      name:        feature.name,
+      icon:        feature.icon,
+      type:        feature.type,
+      plantedDate: feature.plantedDate ?? '',
+      notes:       feature.notes ?? '',
+    });
+    setEditingFeature(feature);
+    setShowFeatureForm(true);
+  }
+
+  async function handleSaveFeature() {
+    if (!featureForm.name.trim()) return;
+    if (editingFeature) {
+      await updatePlotFeature({
+        ...editingFeature,
+        name:        featureForm.name.trim(),
+        icon:        featureForm.icon,
+        type:        featureForm.type,
+        plantedDate: featureForm.plantedDate || undefined,
+        notes:       featureForm.notes || undefined,
+      });
+    } else {
+      const feature: PlotFeature = {
+        id:          uuidv4(),
+        name:        featureForm.name.trim(),
+        icon:        featureForm.icon,
+        type:        featureForm.type,
+        plotX:       2,
+        plotY:       2,
+        plantedDate: featureForm.plantedDate || undefined,
+        notes:       featureForm.notes || undefined,
+      };
+      await addPlotFeature(feature);
+    }
+    setShowFeatureForm(false);
+    setEditingFeature(null);
+  }
+
+  async function handleDeleteFeature(id: string) {
+    if (!confirm('Remove this in-ground plant from your garden?')) return;
+    await removePlotFeature(id);
+  }
+
+  // ── Dimension preview label ────────────────────────────────
+
+  function dimPreview() {
+    const w = toFeet(bedForm.widthVal, bedForm.unit);
+    const l = toFeet(bedForm.lengthVal, bedForm.unit);
+    if (w <= 0 || l <= 0) return null;
+    const cols = Math.max(1, Math.round(w));
+    const rows = Math.max(1, Math.round(l));
+    const sqFt = Math.round(w * l * 10) / 10;
+    if (bedForm.unit === 'in') {
+      return `${Math.round(w * 12)}" × ${Math.round(l * 12)}" = ${sqFt} sq ft · ${cols}×${rows} planting grid`;
+    }
+    return `${sqFt} sq ft · ${cols}×${rows} planting grid`;
+  }
+
+  if (beds.length === 0 && plotFeatures.length === 0) {
     return (
       <div className="page">
         <h1 className="page-title">Garden Planner</h1>
         <div className="empty-state">
           <div className="empty-icon">🌿</div>
           <h3>No beds yet</h3>
-          <p>Add your first garden bed to start planning your layout.</p>
-          <button className="btn btn-primary" onClick={openAddForm}>+ Add a Bed</button>
+          <p>Add your first garden bed or in-ground plant to start planning your layout.</p>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button className="btn btn-primary" onClick={openAddForm}>+ Add a Bed</button>
+            <button className="btn btn-secondary" onClick={openAddFeature}>+ In-Ground Plant</button>
+          </div>
         </div>
         {showBedForm && (
-          <BedFormSheet
-            form={bedForm}
-            setForm={setBedForm}
-            onSave={handleSaveBed}
-            onCancel={() => setShowBedForm(false)}
-          />
+          <BedFormSheet form={bedForm} setForm={setBedForm} beds={beds}
+            onSave={handleSaveBed} onCancel={() => setShowBedForm(false)} dimPreview={dimPreview()} />
+        )}
+        {showFeatureForm && (
+          <FeatureFormSheet form={featureForm} setForm={setFeatureForm}
+            onSave={handleSaveFeature} onCancel={() => setShowFeatureForm(false)}
+            isEdit={!!editingFeature} />
         )}
       </div>
     );
@@ -127,7 +274,10 @@ export function Planner() {
       {/* Header */}
       <div className="flex-between" style={{ marginBottom: '0.75rem' }}>
         <h1 className="page-title" style={{ marginBottom: 0 }}>Garden Planner</h1>
-        <button className="btn btn-secondary btn-sm" onClick={openAddForm}>+ Bed</button>
+        <div style={{ display: 'flex', gap: '0.4rem' }}>
+          <button className="btn btn-ghost btn-sm" onClick={openAddFeature} title="Add in-ground plant">🌳</button>
+          <button className="btn btn-secondary btn-sm" onClick={openAddForm}>+ Bed</button>
+        </div>
       </div>
 
       {/* View toggle */}
@@ -146,7 +296,7 @@ export function Planner() {
       {/* ── PLOT VIEW ── */}
       {view === 'plot' && (
         <div className="card">
-          <GardenPlot onSelectBed={openBedFromPlot} />
+          <GardenPlot onSelectBed={openBedFromPlot} onEditFeature={openEditFeature} />
         </div>
       )}
 
@@ -167,6 +317,11 @@ export function Planner() {
                 onClick={() => setSelectedBedId(bed.id)}
               >
                 {SUN_ICONS[bed.sunExposure ?? 'full-sun']} {bed.name}
+                {(bed.trellisType && bed.trellisType !== 'none') && (
+                  <span style={{ marginLeft: '0.25rem', fontSize: '0.7rem' }}>
+                    {bed.trellisType === 'arch' ? '🌿' : '🪝'}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -178,9 +333,16 @@ export function Planner() {
                   <div>
                     <div className="card-title">{selectedBed.name}</div>
                     <div className="text-muted text-sm">
-                      {selectedBed.widthFt}×{selectedBed.lengthFt} ft ·{' '}
-                      {selectedBed.widthFt * selectedBed.lengthFt} sq ft ·{' '}
+                      {selectedBed.widthFt !== Math.round(selectedBed.widthFt)
+                        ? `${Math.round(selectedBed.widthFt * 12)}" × ${Math.round(selectedBed.lengthFt * 12)}" ·`
+                        : `${selectedBed.widthFt} × ${selectedBed.lengthFt} ft ·`}{' '}
+                      {Math.round(selectedBed.widthFt * selectedBed.lengthFt)} sq ft ·{' '}
                       {selectedBed.slots.length} planting{selectedBed.slots.length !== 1 ? 's' : ''}
+                      {selectedBed.trellisType && selectedBed.trellisType !== 'none' && (
+                        <span style={{ marginLeft: '0.4rem' }}>
+                          · {selectedBed.trellisType === 'arch' ? '🌿 Arch trellis' : '🪝 Wall trellis'}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '0.4rem' }}>
@@ -204,8 +366,8 @@ export function Planner() {
                           <span style={{ marginRight: '0.4rem' }}>{seed?.icon ?? '?'}</span>
                           <span className="fw-bold">{seed?.name ?? slot.plantId}</span>
                           <span className="text-muted text-sm" style={{ marginLeft: '0.5rem' }}>
-                            col {slot.cellX + 1}, row {slot.cellY + 1} ·{' '}
-                            {slot.widthCells}×{slot.lengthCells} block
+                            col {slot.cellX + 1}, row {slot.cellY + 1}
+                            {slot.plantsPerSqFt > 1 && ` · ×${slot.plantsPerSqFt} per sq ft`}
                             {slot.weekOffset > 0 && ` · +${slot.weekOffset}w succession`}
                           </span>
                         </div>
@@ -220,6 +382,33 @@ export function Planner() {
             </>
           )}
 
+          {/* ── In-Ground Plants (Plot Features) ── */}
+          {plotFeatures.length > 0 && (
+            <div className="card" style={{ marginTop: '1rem' }}>
+              <div className="card-header">
+                <div className="card-title">In-Ground Plants</div>
+                <button className="btn btn-ghost btn-sm" onClick={openAddFeature}>+ Add</button>
+              </div>
+              {plotFeatures.map((feature) => (
+                <div key={feature.id} className="plot-feature-row">
+                  <span className="plot-feature-icon">{feature.icon}</span>
+                  <div className="plot-feature-info">
+                    <div className="plot-feature-name">{feature.name}</div>
+                    <div className="plot-feature-meta">
+                      {FEATURE_TYPE_OPTIONS.find(o => o.value === feature.type)?.label ?? feature.type}
+                      {feature.plantedDate && ` · planted ${feature.plantedDate}`}
+                      {feature.notes && ` · ${feature.notes}`}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.25rem', flexShrink: 0 }}>
+                    <button className="btn btn-ghost btn-sm" onClick={() => openEditFeature(feature)}>✏️</button>
+                    <button className="btn btn-ghost btn-sm" onClick={() => void handleDeleteFeature(feature.id)}>🗑️</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="mt-2">
             <button className="btn btn-secondary btn-full" onClick={() => navigate('/calendar')}>
               📅 View Planting Schedule
@@ -232,9 +421,21 @@ export function Planner() {
         <BedFormSheet
           form={bedForm}
           setForm={setBedForm}
+          beds={beds}
           onSave={handleSaveBed}
           onCancel={() => { setShowBedForm(false); setEditingBed(null); }}
           isEdit={!!editingBed}
+          dimPreview={dimPreview()}
+        />
+      )}
+
+      {showFeatureForm && (
+        <FeatureFormSheet
+          form={featureForm}
+          setForm={setFeatureForm}
+          onSave={handleSaveFeature}
+          onCancel={() => { setShowFeatureForm(false); setEditingFeature(null); }}
+          isEdit={!!editingFeature}
         />
       )}
     </div>
@@ -244,19 +445,17 @@ export function Planner() {
 // ─── Bed Form Sheet ───────────────────────────────────────────
 
 function BedFormSheet({
-  form,
-  setForm,
-  onSave,
-  onCancel,
-  isEdit = false,
+  form, setForm, beds, onSave, onCancel, isEdit = false, dimPreview,
 }: {
   form: BedFormValues;
   setForm: (f: BedFormValues) => void;
+  beds: Bed[];
   onSave: () => void;
   onCancel: () => void;
   isEdit?: boolean;
+  dimPreview: string | null;
 }) {
-  const sqFt = (parseInt(form.widthFt) || 0) * (parseInt(form.lengthFt) || 0);
+  const otherBeds = beds.filter(() => true); // all beds available as trellis partners
 
   return (
     <div className="modal-overlay" onClick={onCancel}>
@@ -268,52 +467,69 @@ function BedFormSheet({
           <label className="form-label">Name</label>
           <input
             className="form-input"
-            placeholder="e.g. Front Raised Bed"
+            placeholder="e.g. Left Raised Bed"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             autoFocus
           />
         </div>
 
-        <div className="form-row">
-          <div className="form-group">
-            <label className="form-label">Width (ft)</label>
-            <input
-              className="form-input"
-              type="number"
-              min={1}
-              max={20}
-              value={form.widthFt}
-              onChange={(e) => setForm({ ...form, widthFt: e.target.value })}
-              inputMode="numeric"
-            />
+        {/* Dimensions with unit toggle */}
+        <div className="form-group">
+          <div className="form-label-row">
+            <label className="form-label">Dimensions</label>
+            <div className="unit-toggle">
+              <button
+                className={`unit-btn${form.unit === 'ft' ? ' active' : ''}`}
+                onClick={() => setForm({ ...form, unit: 'ft' })}
+              >ft</button>
+              <button
+                className={`unit-btn${form.unit === 'in' ? ' active' : ''}`}
+                onClick={() => setForm({ ...form, unit: 'in' })}
+              >in</button>
+            </div>
           </div>
-          <div className="form-group">
-            <label className="form-label">Length (ft)</label>
-            <input
-              className="form-input"
-              type="number"
-              min={1}
-              max={20}
-              value={form.lengthFt}
-              onChange={(e) => setForm({ ...form, lengthFt: e.target.value })}
-              inputMode="numeric"
-            />
+          <div className="form-row">
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label">Width ({form.unit})</label>
+              <input
+                className="form-input"
+                type="number"
+                min={form.unit === 'in' ? 6 : 0.5}
+                max={form.unit === 'in' ? 480 : 40}
+                step={form.unit === 'in' ? 1 : 0.5}
+                value={form.widthVal}
+                onChange={(e) => setForm({ ...form, widthVal: e.target.value })}
+                inputMode="decimal"
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label">Length ({form.unit})</label>
+              <input
+                className="form-input"
+                type="number"
+                min={form.unit === 'in' ? 6 : 0.5}
+                max={form.unit === 'in' ? 480 : 40}
+                step={form.unit === 'in' ? 1 : 0.5}
+                value={form.lengthVal}
+                onChange={(e) => setForm({ ...form, lengthVal: e.target.value })}
+                inputMode="decimal"
+              />
+            </div>
           </div>
+          {dimPreview && (
+            <p className="form-hint" style={{ marginTop: '0.4rem' }}>{dimPreview}</p>
+          )}
         </div>
-
-        {sqFt > 0 && (
-          <p className="text-sm text-muted" style={{ marginBottom: '0.75rem', marginTop: '-0.5rem' }}>
-            {sqFt} sq ft total ({form.widthFt}×{form.lengthFt} grid of 1-ft cells)
-          </p>
-        )}
 
         <div className="form-group">
           <label className="form-label">Bed type</label>
           <select className="form-select" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as BedType })}>
-            <option value="raised">Raised Bed</option>
-            <option value="inground">In-Ground Plot</option>
-            <option value="container">Container / Pot</option>
+            <option value="raised">🪵 Raised Bed</option>
+            <option value="inground">🌍 In-Ground Plot</option>
+            <option value="container">🪴 Container / Large Pot</option>
+            <option value="planter-box">📦 Planter Box (rectangular pot)</option>
+            <option value="bucket">🪣 Bucket / Small Container</option>
           </select>
         </div>
 
@@ -334,14 +550,143 @@ function BedFormSheet({
             ))}
           </select>
           <p className="form-hint">
-            Used to detect when tall plants are placed where they'd cast shade over shorter neighbours.
+            Used to detect when tall plants cast shade over shorter neighbours.
           </p>
         </div>
+
+        {/* Trellis */}
+        <div className="form-group">
+          <label className="form-label">🌿 Trellis structure</label>
+          <select className="form-select" value={form.trellisType} onChange={(e) => setForm({ ...form, trellisType: e.target.value as TrellisType, trellisPartnerId: '' })}>
+            <option value="none">None</option>
+            <option value="wall">Wall trellis (along one side)</option>
+            <option value="arch">Arch trellis (spans overhead, connects to another bed)</option>
+          </select>
+        </div>
+
+        {form.trellisType === 'arch' && otherBeds.length > 0 && (
+          <div className="form-group">
+            <label className="form-label">Connected to bed</label>
+            <select
+              className="form-select"
+              value={form.trellisPartnerId}
+              onChange={(e) => setForm({ ...form, trellisPartnerId: e.target.value })}
+            >
+              <option value="">— select partner bed —</option>
+              {otherBeds.map((b) => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+            <p className="form-hint">The arch runs overhead between this bed and its partner.</p>
+          </div>
+        )}
 
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <button className="btn btn-ghost" onClick={onCancel}>Cancel</button>
           <button className="btn btn-primary btn-full" onClick={onSave} disabled={!form.name.trim()}>
             {isEdit ? 'Save Changes' : 'Add Bed'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Plot Feature Form Sheet ──────────────────────────────────
+
+function FeatureFormSheet({
+  form, setForm, onSave, onCancel, isEdit = false,
+}: {
+  form: FeatureFormValues;
+  setForm: (f: FeatureFormValues) => void;
+  onSave: () => void;
+  onCancel: () => void;
+  isEdit?: boolean;
+}) {
+  return (
+    <div className="modal-overlay" onClick={onCancel}>
+      <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-handle" />
+        <div className="modal-title">{isEdit ? 'Edit Plant' : 'Add In-Ground Plant'}</div>
+
+        <p className="text-sm text-muted" style={{ marginBottom: '1rem' }}>
+          For perennials, trees, and berry bushes planted directly in the ground — not in a bed.
+          They'll appear as draggable markers on the plot map.
+        </p>
+
+        {/* Quick-pick common perennials */}
+        {!isEdit && (
+          <div className="form-group">
+            <label className="form-label">Quick pick</label>
+            <div className="quick-pick-grid">
+              {COMMON_PERENNIALS.map((p) => (
+                <button
+                  key={p.name}
+                  className={`quick-pick-btn${form.name === p.name ? ' active' : ''}`}
+                  onClick={() => setForm({ ...form, name: p.name, icon: p.icon, type: p.type })}
+                >
+                  {p.icon} {p.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="form-row">
+          <div className="form-group" style={{ flex: 1 }}>
+            <label className="form-label">Name</label>
+            <input
+              className="form-input"
+              placeholder="e.g. Raspberry patch"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
+          </div>
+          <div className="form-group" style={{ width: '5rem', flexShrink: 0 }}>
+            <label className="form-label">Icon</label>
+            <input
+              className="form-input"
+              value={form.icon}
+              onChange={(e) => setForm({ ...form, icon: e.target.value })}
+              style={{ textAlign: 'center', fontSize: '1.5rem', padding: '0.2rem' }}
+              maxLength={4}
+            />
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">Plant type</label>
+          <select className="form-select" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as PlotFeatureType })}>
+            {FEATURE_TYPE_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>{o.icon} {o.label}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">Date planted (optional)</label>
+          <input
+            type="date"
+            className="form-input"
+            value={form.plantedDate}
+            onChange={(e) => setForm({ ...form, plantedDate: e.target.value })}
+          />
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">Notes (optional)</label>
+          <input
+            className="form-input"
+            placeholder="e.g. 2 canes planted along fence"
+            value={form.notes}
+            onChange={(e) => setForm({ ...form, notes: e.target.value })}
+          />
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <button className="btn btn-ghost" onClick={onCancel}>Cancel</button>
+          <button className="btn btn-primary btn-full" onClick={onSave} disabled={!form.name.trim()}>
+            {isEdit ? 'Save Changes' : 'Add to Garden'}
           </button>
         </div>
       </div>

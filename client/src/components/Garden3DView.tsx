@@ -399,6 +399,88 @@ function buildPlant(
   }
 }
 
+// ─── Virtual Joystick (mobile walk controls) ──────────────────
+
+interface VirtualJoystickProps {
+  onMove: (x: number, y: number) => void;
+}
+
+function VirtualJoystick({ onMove }: VirtualJoystickProps) {
+  const baseRef  = useRef<HTMLDivElement>(null);
+  const knobRef  = useRef<HTMLDivElement>(null);
+  const touchId  = useRef<number | null>(null);
+  const active   = useRef(false);
+
+  const RADIUS = 44; // px — half the base size
+
+  function getOffset(touch: Touch): { x: number; y: number } {
+    const base = baseRef.current;
+    if (!base) return { x: 0, y: 0 };
+    const rect = base.getBoundingClientRect();
+    const cx = rect.left + rect.width  / 2;
+    const cy = rect.top  + rect.height / 2;
+    const dx = touch.clientX - cx;
+    const dy = touch.clientY - cy;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const clamp = Math.min(dist, RADIUS);
+    const angle = Math.atan2(dy, dx);
+    return {
+      x: (Math.cos(angle) * clamp) / RADIUS,
+      y: (Math.sin(angle) * clamp) / RADIUS,
+    };
+  }
+
+  function positionKnob(nx: number, ny: number) {
+    const knob = knobRef.current;
+    if (!knob) return;
+    knob.style.transform = `translate(${nx * RADIUS}px, ${ny * RADIUS}px)`;
+  }
+
+  function onTouchStart(e: React.TouchEvent) {
+    if (active.current) return;
+    const touch = e.changedTouches[0];
+    touchId.current = touch.identifier;
+    active.current  = true;
+    const { x, y } = getOffset(touch);
+    positionKnob(x, y);
+    onMove(x, -y); // invert Y: up = forward
+    e.stopPropagation();
+  }
+
+  function onTouchMove(e: React.TouchEvent) {
+    if (!active.current) return;
+    const touch = Array.from(e.changedTouches).find((t) => t.identifier === touchId.current);
+    if (!touch) return;
+    const { x, y } = getOffset(touch);
+    positionKnob(x, y);
+    onMove(x, -y);
+    e.stopPropagation();
+    e.preventDefault();
+  }
+
+  function onTouchEnd(e: React.TouchEvent) {
+    const touch = Array.from(e.changedTouches).find((t) => t.identifier === touchId.current);
+    if (!touch) return;
+    active.current  = false;
+    touchId.current = null;
+    positionKnob(0, 0);
+    onMove(0, 0);
+    e.stopPropagation();
+  }
+
+  return (
+    <div
+      ref={baseRef}
+      className="joystick-base"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+    >
+      <div ref={knobRef} className="joystick-knob" />
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────
 
 interface Garden3DViewProps {
@@ -493,6 +575,12 @@ export function Garden3DView({ onExit }: Garden3DViewProps) {
   const timeRef                     = useRef(10);
   const [focusedPlant, setFocusedPlant] = useState<PlantInfo | null>(null);
   const focusedKeyRef               = useRef<string | null>(null);
+
+  const joystickMoveRef = useRef({ x: 0, y: 0 });
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [isMobile, _setIsMobile] = useState(() =>
+    typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0)
+  );
 
   useEffect(() => { modeRef.current = mode; }, [mode]);
   useEffect(() => { timeRef.current = timeOfDay; }, [timeOfDay]);
@@ -774,6 +862,11 @@ export function Garden3DView({ onExit }: Garden3DViewProps) {
         if (keys.has('a') || keys.has('arrowleft'))  camera.position.addScaledVector(walkRight, -walkSpeed);
         if (keys.has('d') || keys.has('arrowright')) camera.position.addScaledVector(walkRight,  walkSpeed);
 
+        const jx = joystickMoveRef.current.x;
+        const jy = joystickMoveRef.current.y;
+        if (Math.abs(jy) > 0.05) camera.position.addScaledVector(walkDir, walkSpeed * jy);
+        if (Math.abs(jx) > 0.05) camera.position.addScaledVector(walkRight, walkSpeed * jx);
+
         camera.position.y = 5.5;
         camera.position.x = Math.max(-8, Math.min(plotW + 8, camera.position.x));
         camera.position.z = Math.max(-8, Math.min(plotL + 8, camera.position.z));
@@ -914,6 +1007,11 @@ export function Garden3DView({ onExit }: Garden3DViewProps) {
           </div>
         )}
       </div>
+
+      {/* Mobile joystick — walk mode only */}
+      {isMobile && mode === 'walk' && (
+        <VirtualJoystick onMove={(x, y) => { joystickMoveRef.current = { x, y }; }} />
+      )}
     </div>
   );
 }

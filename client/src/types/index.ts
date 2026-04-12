@@ -1,6 +1,36 @@
 // ─── Enums / Union Types ──────────────────────────────────────
 
-export type BedType = 'raised' | 'inground' | 'container';
+export type BedType = 'raised' | 'inground' | 'container' | 'bucket' | 'planter-box';
+
+/** Type of trellis structure attached to a bed. */
+export type TrellisType = 'none' | 'wall' | 'arch';
+
+/**
+ * An in-ground plant that lives directly on the plot — not in a bed.
+ * Used for perennials, fruit trees, berry bushes, and vines that don't
+ * follow the normal seed-starting / transplant cycle.
+ */
+export type PlotFeatureType =
+  | 'perennial-vine'
+  | 'perennial-berry'
+  | 'perennial-fruit'
+  | 'tree'
+  | 'shrub'
+  | 'herb-perennial';
+
+export interface PlotFeature {
+  id: string;
+  name: string;
+  /** Emoji icon to display on the plot canvas. */
+  icon: string;
+  type: PlotFeatureType;
+  /** Position on the garden plot in real-world feet (from top-left corner). */
+  plotX: number;
+  plotY: number;
+  /** ISO date (YYYY-MM-DD) when the plant was put in the ground. */
+  plantedDate?: string;
+  notes?: string;
+}
 export type StorageMode = 'local' | 'remote';
 export type TaskType =
   | 'prep'
@@ -35,8 +65,52 @@ export type SunExposure = 'full-sun' | 'partial-sun' | 'shade';
  */
 export type NorthEdge = 'top' | 'bottom' | 'left' | 'right';
 
+/**
+ * The current growth stage of a planting slot.
+ * This drives which tasks get auto-generated and from what date.
+ */
+export type PlantStage =
+  | 'planned'               // seeds not yet started — full cycle from frost-date schedule
+  | 'seeds-started'         // seeds already in trays; stageDate = when they were started
+  | 'ready-to-transplant'   // hardened off and ready to go in ground
+  | 'direct-sow'            // will direct sow at the frost-relative date
+  | 'in-ground'             // already transplanted; stageDate = when planted
+  | 'store-bought';         // purchased starter plant; stageDate = when planted
+
 /** How tall a plant grows at maturity — affects shadow casting warnings. */
 export type HeightCategory = 'low' | 'medium' | 'tall' | 'vine';
+
+export type PlantingWindowStatus =
+  | 'too-early'
+  | 'start-indoors'
+  | 'direct-sow-now'
+  | 'transplant-now'
+  | 'in-season'
+  | 'too-late';
+
+export interface PlantingWindow {
+  status: PlantingWindowStatus;
+  /** Positive = days until window opens. Negative = days since window passed. */
+  daysOffset: number;
+  label: string;
+  color: 'green' | 'yellow' | 'red' | 'blue' | 'gray';
+}
+
+export interface GapSuggestion {
+  bedId: string;
+  bedName: string;
+  /** ISO date — day after the finishing crop's harvest date */
+  gapStartDate: string;
+  /** ISO date — day before the next crop's sow date, or firstFrostDate */
+  gapEndDate: string;
+  gapDays: number;
+  suggestedCrops: {
+    seed: CatalogSeed;
+    method: 'direct-sow' | 'transplant';
+    /** ISO date — projected harvest, guaranteed < firstFrostDate */
+    harvestBy: string;
+  }[];
+}
 
 // ─── Garden Layout ────────────────────────────────────────────
 
@@ -65,12 +139,35 @@ export interface PlantSlot {
   successionGroupId?: string;
   /** 0 = on base schedule. +N = N weeks offset for succession planting. */
   weekOffset: number;
+  /**
+   * What stage this planting is currently at.
+   * Controls which tasks are generated and from what anchor date.
+   * Defaults to 'planned' if absent (full frost-relative schedule).
+   */
+  stage?: PlantStage;
+  /**
+   * ISO date (YYYY-MM-DD) relevant to the stage:
+   *   seeds-started      → date seeds were sown into tray
+   *   in-ground          → date plant went into the ground
+   *   store-bought       → date purchased/planted
+   *   ready-to-transplant → date hardened off (optional, defaults to today)
+   * Not used for 'planned' or 'direct-sow'.
+   */
+  stageDate?: string;
 }
 
 export interface Bed {
   id: string;
   name: string;
+  /**
+   * Width in feet (decimal OK — e.g. 94in → 7.83ft).
+   * The bed grid snaps to the nearest integer column count.
+   */
   widthFt: number;
+  /**
+   * Length in feet (decimal OK — e.g. 50in → 4.17ft).
+   * The bed grid snaps to the nearest integer row count.
+   */
   lengthFt: number;
   type: BedType;
   /** How much direct sunlight this bed receives each day. */
@@ -85,6 +182,13 @@ export interface Bed {
   /** Position on the garden plot overview canvas (feet from top-left corner). */
   plotX?: number;
   plotY?: number;
+  /** Trellis structure attached to this bed. Defaults to 'none'. */
+  trellisType?: TrellisType;
+  /**
+   * ID of the partner bed for an arch trellis.
+   * Both beds should reference each other's IDs.
+   */
+  trellisPartnerId?: string;
 }
 
 export interface Garden {
@@ -92,6 +196,11 @@ export interface Garden {
   name: string;
   year: number;
   beds: Bed[];
+  /**
+   * In-ground plants placed directly on the plot canvas — perennials, fruit
+   * trees, berry bushes, vines, etc. that don't live inside a raised bed.
+   */
+  plotFeatures?: PlotFeature[];
 }
 
 /** A frozen snapshot of a full garden for year-over-year import. */
@@ -109,8 +218,19 @@ export interface GardenSeason {
 
 export interface CatalogSeed {
   id: string;
+  /**
+   * The specific variety or cultivar name shown in the picker and on bed cells.
+   * e.g. "Brandywine", "Buttercrunch", "Sun Gold"
+   */
   name: string;
+  /**
+   * Top-level grouping shown as a section header in the plant picker.
+   * e.g. "Tomato", "Lettuce & Salad Greens", "Brassicas"
+   */
+  category: string;
+  /** Botanical or common family name (used for companion rotation warnings). */
   family: string;
+  /** Emoji icon shown in the bed grid cell. */
   icon: string;
   /** Weeks before last frost to start seeds indoors. */
   indoorStartWeeks: number;
@@ -161,6 +281,8 @@ export interface Settings {
    * Default 'north'. Set to 'east' if you view your yard with East at the top.
    */
   plotTopEdge?: 'north' | 'east' | 'south' | 'west';
+  notificationsEnabled?: boolean;
+  weeklyDigestEnabled?: boolean;
 }
 
 // ─── Tasks ────────────────────────────────────────────────────
@@ -180,6 +302,8 @@ export interface Task {
 
 // ─── Activity Log ─────────────────────────────────────────────
 
+export type YieldUnit = 'lbs' | 'kg' | 'count' | 'bunches';
+
 export interface ActivityLog {
   id: string;
   date: string; // YYYY-MM-DD
@@ -187,6 +311,8 @@ export interface ActivityLog {
   slotId?: string;
   type: ActivityType;
   note: string;
+  yieldAmount?: number;
+  yieldUnit?: YieldUnit;
 }
 
 // ─── Export Bundle ────────────────────────────────────────────

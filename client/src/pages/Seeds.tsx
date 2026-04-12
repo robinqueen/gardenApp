@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { SEED_CATALOG } from '../catalog/seeds';
 import { useGardenStore } from '../store/useGardenStore';
 import type { CatalogSeed, UserSeed } from '../types';
+import { getPlantingWindow, resolveFrostDates } from '../utils/plantingWindow';
+import { getFrostDateObjects } from '../catalog/frostDates';
+import { PlantingWindowBadge } from '../components/PlantingWindowBadge';
 
 type Tab = 'catalog' | 'inventory';
 
@@ -11,6 +14,17 @@ export function Seeds() {
   const [query, setQuery] = useState('');
   const [selectedSeed, setSelectedSeed] = useState<CatalogSeed | null>(null);
   const [editingNote, setEditingNote] = useState<string | null>(null); // userSeed.id
+
+  const { settings } = useGardenStore();
+  const today = useMemo(() => { const d = new Date(); d.setHours(0,0,0,0); return d; }, []);
+  const frosts = useMemo(() =>
+    resolveFrostDates(
+      settings.lastFrostDate,
+      settings.firstFallFrostDate,
+      settings.zipcode,
+      today.getFullYear(),
+      getFrostDateObjects
+    ), [settings, today]);
 
   const ownedIds = new Set(userSeeds.map((s) => s.seedId));
 
@@ -76,6 +90,12 @@ export function Seeds() {
                     <div className="seed-icon">{seed.icon}</div>
                     <div className="seed-name">{seed.name}</div>
                     <div className="seed-family">{seed.family}</div>
+                    {frosts && (
+                      <PlantingWindowBadge
+                        window={getPlantingWindow(seed, frosts.lastFrost, frosts.firstFrost, today)}
+                        variant="pill"
+                      />
+                    )}
                     {ownedIds.has(seed.id) && (
                       <div style={{ marginTop: 4 }}>
                         <span className="badge badge-green">In stock</span>
@@ -143,6 +163,17 @@ function SeedDetail({
   onToggleOwned: () => void;
   onBack: () => void;
 }) {
+  const { settings } = useGardenStore();
+  const today = useMemo(() => { const d = new Date(); d.setHours(0,0,0,0); return d; }, []);
+  const frosts = useMemo(() =>
+    resolveFrostDates(
+      settings.lastFrostDate,
+      settings.firstFallFrostDate,
+      settings.zipcode,
+      today.getFullYear(),
+      getFrostDateObjects
+    ), [settings, today]);
+
   const companionNames = seed.companionsWith
     .map((id) => SEED_CATALOG.find((s) => s.id === id)?.name)
     .filter(Boolean);
@@ -221,6 +252,17 @@ function SeedDetail({
               <div className="stat-value">Every {seed.successionIntervalDays}d</div>
             </div>
           )}
+          {frosts && (() => {
+            const pw = getPlantingWindow(seed, frosts.lastFrost, frosts.firstFrost, today);
+            return (
+              <div className="seed-stat">
+                <div className="stat-label">Plant now?</div>
+                <div className="stat-value">
+                  <PlantingWindowBadge window={pw} variant="pill" />
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         {seed.notes && (

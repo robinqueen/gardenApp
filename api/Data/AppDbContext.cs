@@ -14,16 +14,20 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
-        // Tasks: index on date for range queries
+        // Tasks: composite index on household + date for filtered range queries
         builder.Entity<TaskRecord>()
-            .HasIndex(t => t.Date);
+            .HasIndex(t => new { t.HouseholdId, t.Date });
 
-        // Activity logs: index on date for recent-first queries
+        // Activity logs: composite index on household + date for recent-first queries
         builder.Entity<ActivityLogRecord>()
-            .HasIndex(a => a.Date);
+            .HasIndex(a => new { a.HouseholdId, a.Date });
 
-        // Seasons: index on year for ordering
+        // User seeds: index on household
+        builder.Entity<UserSeedRecord>()
+            .HasIndex(s => s.HouseholdId);
+
+        // Seasons: composite index on household + year for ordering
         builder.Entity<GardenSeasonRecord>()
-            .HasIndex(s => s.Year);
+            .HasIndex(s => new { s.HouseholdId, s.Year });
     }
 }

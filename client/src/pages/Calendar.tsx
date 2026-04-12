@@ -6,6 +6,8 @@ import { getFrostDateObjects } from '../catalog/frostDates';
 import { SEED_CATALOG } from '../catalog/seeds';
 import type { TaskType } from '../types';
 import { toIsoDate } from '../catalog/frostDates';
+import { detectAllGaps } from '../utils/successionGaps';
+import { GapSuggestionsPanel } from '../components/GapSuggestionsPanel';
 
 const MONTHS = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -319,7 +321,7 @@ function SuccessionGantt() {
 // ─── Main Calendar Page ───────────────────────────────────────
 
 export function Calendar() {
-  const { tasks, completeTask, deleteTask, addCustomTask, garden } = useGardenStore();
+  const { tasks, completeTask, deleteTask, addCustomTask, garden, settings } = useGardenStore();
 
   const [calView, setCalView] = useState<CalView>('schedule');
   const currentMonth = new Date().getMonth();
@@ -353,6 +355,21 @@ export function Calendar() {
 
   const hasTasks = garden && garden.beds.some((b) => b.slots.length > 0);
 
+  const gaps = useMemo(() => {
+    if (!garden) return [];
+    try {
+      const t = new Date(); t.setHours(0, 0, 0, 0);
+      const year = t.getFullYear();
+      const fd = getFrostDateObjects(settings.zipcode, year);
+      const firstFrost = settings.firstFallFrostDate
+        ? new Date(settings.firstFallFrostDate + 'T00:00:00')
+        : fd.firstFrost;
+      return detectAllGaps(garden.beds, tasks, firstFrost, t);
+    } catch {
+      return [];
+    }
+  }, [garden, tasks, settings]);
+
   return (
     <div className="page">
       <div className="flex-between" style={{ marginBottom: '0.75rem' }}>
@@ -380,6 +397,10 @@ export function Calendar() {
           📊 Timeline
         </button>
       </div>
+
+      {gaps.length > 0 && (
+        <GapSuggestionsPanel gaps={gaps} variant="calendar" />
+      )}
 
       {/* ── Gantt / Timeline ── */}
       {calView === 'gantt' && <SuccessionGantt />}

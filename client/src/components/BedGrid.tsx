@@ -5,6 +5,9 @@ import { occupiedCells, isOriginCell, densityLabel, buildSlot } from '../utils/s
 import { shadowWarning, sunArrow, SUN_ICONS } from '../utils/sunWarnings';
 import { PlantPicker } from './PlantPicker';
 import { useGardenStore } from '../store/useGardenStore';
+import { getPlantingWindow, resolveFrostDates } from '../utils/plantingWindow';
+import { getFrostDateObjects } from '../catalog/frostDates';
+import { PlantingWindowBadge } from './PlantingWindowBadge';
 
 interface BedGridProps {
   bed: Bed;
@@ -64,8 +67,21 @@ export function BedGrid({ bed, readonly = false }: BedGridProps) {
     return warnings;
   }, [bed, sunExposure, northEdge]);
 
-  const cols = bed.widthFt;
-  const rows = bed.lengthFt;
+  const { settings } = useGardenStore();
+  const today = useMemo(() => { const d = new Date(); d.setHours(0,0,0,0); return d; }, []);
+  const frosts = useMemo(() =>
+    resolveFrostDates(
+      settings.lastFrostDate,
+      settings.firstFallFrostDate,
+      settings.zipcode,
+      today.getFullYear(),
+      getFrostDateObjects
+    ), [settings, today]);
+
+  // Round to nearest integer — beds stored in decimal feet (e.g. 7.83 for 94 in)
+  // must produce a whole-number grid. Each cell = one planting position.
+  const cols = Math.max(1, Math.round(bed.widthFt));
+  const rows = Math.max(1, Math.round(bed.lengthFt));
 
   function handleCellClick(x: number, y: number) {
     if (readonly) return;
@@ -92,14 +108,27 @@ export function BedGrid({ bed, readonly = false }: BedGridProps) {
     right:  { top: 'W', bottom: 'E', left: 'S', right: 'N' },
   }[northEdge];
 
+  const trellisType = bed.trellisType ?? 'none';
+
   return (
     <>
       {/* Sun exposure + direction summary */}
       <div className="bed-sun-header">
         <span>{SUN_ICONS[sunExposure]} {sunExposure.replace('-', ' ')}</span>
+        {trellisType !== 'none' && (
+          <span className="bed-trellis-badge" title={trellisType === 'arch' ? 'Arch trellis' : 'Wall trellis'}>
+            {trellisType === 'arch' ? '🌿 Arch trellis' : '🪝 Wall trellis'}
+          </span>
+        )}
         <span className="bed-sun-dir">
           Sun {sunArrow(northEdge)}
         </span>
+      </div>
+      {/* Bed dimensions */}
+      <div className="bed-dims-hint">
+        {bed.widthFt !== Math.round(bed.widthFt) || bed.lengthFt !== Math.round(bed.lengthFt)
+          ? `${Math.round(bed.widthFt * 12)}" × ${Math.round(bed.lengthFt * 12)}" · ${cols}×${rows} grid`
+          : `${cols}×${rows} ft grid`}
       </div>
 
       {/* Grid with compass labels */}
@@ -149,32 +178,42 @@ export function BedGrid({ bed, readonly = false }: BedGridProps) {
                       onMouseLeave={() => setHoverSlotId(null)}
                       title={
                         seed
-                          ? `${seed.name}${slot!.weekOffset > 0 ? ` (+${slot!.weekOffset}w succession)` : ''}${hasWarning ? ' ⚠️ shadow risk' : ''}${readonly ? '' : ' — tap to remove'}`
+                          ? [
+                              seed.name,
+                              slot!.weekOffset > 0 ? `+${slot!.weekOffset}w succession` : '',
+                              hasWarning ? '⚠️ shadow risk' : '',
+                              frosts ? getPlantingWindow(seed, frosts.lastFrost, frosts.firstFrost, today).label : '',
+                              !readonly ? '— tap to remove' : '',
+                            ].filter(Boolean).join(' · ')
                           : readonly ? '' : `(${col + 1},${row + 1}) — tap to plant`
                       }
                     >
                       {seed && origin && (
                         <>
                           <span className="cell-icon">{seed.icon}</span>
-                          <span className="cell-count">{densityLabel(slot!)}</span>
+                          {densityLabel(slot!) && (
+                            <span className="cell-count">{densityLabel(slot!)}</span>
+                          )}
                           {slot!.weekOffset > 0 && (
                             <span className="cell-offset">+{slot!.weekOffset}w</span>
                           )}
                           {hasWarning && <span className="cell-warn">⚠️</span>}
                           {slot!.stage && slot!.stage !== 'planned' && slot!.stage !== 'direct-sow' && (
                             <span className="cell-stage" title={slot!.stage.replace(/-/g, ' ')}>
-                              {slot!.stage === 'seeds-started'       ? '🌱'
+                              {slot!.stage === 'seeds-started'        ? '🌱'
                                : slot!.stage === 'ready-to-transplant' ? '🪴'
                                : slot!.stage === 'in-ground'           ? '🌿'
                                : slot!.stage === 'store-bought'        ? '🏪'
                                : ''}
                             </span>
                           )}
+                          {frosts && (
+                            <PlantingWindowBadge
+                              window={getPlantingWindow(seed, frosts.lastFrost, frosts.firstFrost, today)}
+                              variant="dot"
+                            />
+                          )}
                         </>
-                      )}
-                      {/* Non-origin occupied cells: show a faint ownership indicator */}
-                      {seed && !origin && (
-                        <span className="cell-claimed-dot">{seed.icon}</span>
                       )}
                     </div>
                   );

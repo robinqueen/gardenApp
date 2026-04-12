@@ -3,10 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import { useGardenStore } from '../store/useGardenStore';
 import { getFrostDateObjects, formatDate } from '../catalog/frostDates';
 import type { ExportBundle } from '../types';
+import { buildShareUrl } from '../utils/shareLink';
+import {
+  notificationsSupported,
+  requestNotificationPermission,
+  getNotificationPermission,
+  notifyTodayTasks,
+} from '../utils/notifications';
+import { getHouseholdId, setHouseholdId, generateNewHouseholdId } from '../utils/household';
+import { clearAdapterCache } from '../adapters';
 
 export function Settings() {
   const navigate = useNavigate();
-  const { settings, saveSettings, exportToFile, importFromFile } = useGardenStore();
+  const { settings, saveSettings, exportToFile, importFromFile, garden, resetAll } = useGardenStore();
 
   const [form, setForm] = useState({
     zipcode: settings.zipcode,
@@ -15,9 +24,19 @@ export function Settings() {
     apiBaseUrl: settings.apiBaseUrl,
   });
   const [saved, setSaved] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [notifPermission, setNotifPermission] = useState(getNotificationPermission());
+
+  // Household state
+  const [currentHouseholdId, setCurrentHouseholdId] = useState(getHouseholdId);
+  const [joinCode, setJoinCode] = useState('');
+  const [householdCopied, setHouseholdCopied] = useState(false);
+  const [householdMsg, setHouseholdMsg] = useState<string | null>(null);
 
   const derived = form.zipcode.length >= 3 ? getFrostDateObjects(form.zipcode) : null;
 
@@ -48,6 +67,104 @@ export function Settings() {
       setImporting(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
+  }
+
+  function handleGenerateShare() {
+    if (!garden) return;
+    const url = buildShareUrl(garden, settings);
+    setShareUrl(url);
+  }
+
+  async function handleCopyShare() {
+    if (!shareUrl) return;
+    await navigator.clipboard.writeText(shareUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function handleEnableNotifications() {
+    const perm = await requestNotificationPermission();
+    setNotifPermission(perm);
+    if (perm === 'granted') {
+      await saveSettings({ ...settings, notificationsEnabled: true });
+    }
+  }
+
+  async function handleDisableNotifications() {
+    await saveSettings({ ...settings, notificationsEnabled: false, weeklyDigestEnabled: false });
+  }
+
+  async function handleToggleWeeklyDigest() {
+    await saveSettings({ ...settings, weeklyDigestEnabled: !settings.weeklyDigestEnabled });
+  }
+
+  async function handleTestNotification() {
+    // Fire a test today-tasks notification with dummy data
+    await notifyTodayTasks([{
+      id: 'test',
+      title: 'Test notification',
+      description: 'Garden App notifications are working!',
+      date: new Date().toISOString().slice(0, 10),
+      type: 'custom',
+    }]);
+  }
+
+  // ── Reset handler ──────────────────────────────────────────
+
+  async function handleResetAll() {
+    const confirmed = confirm(
+      'Reset everything?\n\n' +
+      'This will permanently delete:\n' +
+      '• All garden beds and plantings\n' +
+      '• All tasks and activity logs\n' +
+      '• Your seed inventory\n' +
+      '• All season archives\n\n' +
+      'Your settings (zipcode, frost dates, API URL) will be cleared too.\n\n' +
+      'TIP: Export a backup first if you want to save your data.\n\n' +
+      'Type OK to confirm — this cannot be undone.'
+    );
+    if (!confirmed) return;
+    setResetting(true);
+    try {
+      await resetAll();
+      navigate('/setup');
+    } finally {
+      setResetting(false);
+    }
+  }
+
+  // ── Household handlers ─────────────────────────────────────
+
+  async function handleCopyHouseholdCode() {
+    await navigator.clipboard.writeText(currentHouseholdId);
+    setHouseholdCopied(true);
+    setTimeout(() => setHouseholdCopied(false), 2000);
+  }
+
+  function handleGenerateNewCode() {
+    if (!confirm(
+      'Generate a new household code?\n\n' +
+      'Any devices on your current code will no longer sync until they join the new code.'
+    )) return;
+    const id = generateNewHouseholdId();
+    setCurrentHouseholdId(id);
+    clearAdapterCache();
+    setHouseholdMsg('New code generated. The app will reload to connect to your new household.');
+    setTimeout(() => window.location.reload(), 1800);
+  }
+
+  function handleJoinHousehold() {
+    const code = joinCode.trim().toUpperCase();
+    if (code.length < 4) {
+      setHouseholdMsg('Please enter a valid household code (at least 4 characters).');
+      return;
+    }
+    setHouseholdId(code);
+    setCurrentHouseholdId(code);
+    clearAdapterCache();
+    setJoinCode('');
+    setHouseholdMsg(`Joined household "${code}". Reloading to sync data…`);
+    setTimeout(() => window.location.reload(), 1500);
   }
 
   return (
@@ -105,6 +222,57 @@ export function Settings() {
           />
         </div>
       </div>
+
+      {/* Notifications */}
+      {notificationsSupported() && (
+        <div className="card page-section">
+          <div className="card-header">
+            <div className="card-title">Notifications</div>
+          </div>
+
+          {notifPermission === 'denied' ? (
+            <div className="alert alert-warn">
+              Notifications are blocked in your browser. Enable them in your browser settings to use this feature.
+            </div>
+          ) : !settings.notificationsEnabled ? (
+            <>
+              <p className="text-sm text-muted" style={{ marginBottom: '0.75rem' }}>
+                Get reminders when garden tasks are due. No account or server needed — notifications are local to this device.
+              </p>
+              <button className="btn btn-secondary btn-full" onClick={() => void handleEnableNotifications()}>
+                🔔 Enable Notifications
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="alert alert-info" style={{ marginBottom: '0.75rem' }}>
+                ✅ Notifications enabled — you'll be reminded about tasks due today when you open the app.
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input
+                    type="checkbox"
+                    checked={settings.weeklyDigestEnabled ?? false}
+                    onChange={() => void handleToggleWeeklyDigest()}
+                  />
+                  Weekly digest (Sunday evenings)
+                </label>
+                <p className="form-hint">A summary of tasks coming up in the next 7 days.</p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button className="btn btn-ghost btn-sm" onClick={() => void handleTestNotification()}>
+                  Test notification
+                </button>
+                <button className="btn btn-ghost btn-sm" onClick={() => void handleDisableNotifications()}>
+                  Disable
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Backend */}
       <div className="card page-section">
@@ -175,6 +343,125 @@ export function Settings() {
         </div>
       </div>
 
+      {/* Share Garden */}
+      <div className="card page-section">
+        <div className="card-header">
+          <div className="card-title">Share Garden</div>
+        </div>
+        <p className="text-sm text-muted" style={{ marginBottom: '1rem' }}>
+          Generate a read-only link anyone can open — no account needed. The link
+          encodes your current bed layout and plant placements.
+        </p>
+
+        {!shareUrl ? (
+          <button
+            className="btn btn-secondary btn-full"
+            onClick={handleGenerateShare}
+            disabled={!garden}
+          >
+            🔗 Generate Share Link
+          </button>
+        ) : (
+          <>
+            <div className="share-link-row">
+              <input
+                className="form-input"
+                readOnly
+                value={shareUrl}
+                onFocus={(e) => e.target.select()}
+                style={{ fontSize: '0.75rem', fontFamily: 'monospace' }}
+              />
+              <button
+                className={`btn ${copied ? 'btn-secondary' : 'btn-primary'}`}
+                onClick={() => void handleCopyShare()}
+                style={{ flexShrink: 0 }}
+              >
+                {copied ? '✓ Copied' : 'Copy'}
+              </button>
+            </div>
+            {shareUrl.length > 6000 && (
+              <div className="alert alert-warn" style={{ marginTop: '0.5rem' }}>
+                This link is very long. Some apps may truncate it.
+              </div>
+            )}
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => setShareUrl(null)}
+              style={{ marginTop: '0.5rem' }}
+            >
+              ✕ Clear
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Household / Multi-device Sync */}
+      <div className="card page-section">
+        <div className="card-header">
+          <div className="card-title">Household Sync</div>
+        </div>
+        <p className="text-sm text-muted" style={{ marginBottom: '1rem' }}>
+          Share your garden data across multiple devices or with a partner.
+          Everyone using the same <strong>household code</strong> sees the same garden
+          (requires the remote API backend to be configured above).
+        </p>
+
+        {/* Current code */}
+        <div className="form-group">
+          <label className="form-label">Your Household Code</label>
+          <div className="household-code-row">
+            <span className="household-code">{currentHouseholdId}</span>
+            <button
+              className={`btn btn-sm ${householdCopied ? 'btn-secondary' : 'btn-ghost'}`}
+              onClick={() => void handleCopyHouseholdCode()}
+            >
+              {householdCopied ? '✓ Copied' : 'Copy'}
+            </button>
+          </div>
+          <p className="form-hint">
+            Enter this code on other devices to sync your garden.
+          </p>
+        </div>
+
+        {/* Join a different household */}
+        <div className="form-group">
+          <label className="form-label">Join a Different Household</label>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <input
+              className="form-input"
+              placeholder="Enter household code"
+              value={joinCode}
+              onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+              maxLength={16}
+              style={{ flex: 1, textTransform: 'uppercase', fontFamily: 'monospace' }}
+            />
+            <button
+              className="btn btn-primary"
+              onClick={handleJoinHousehold}
+              disabled={joinCode.trim().length < 4}
+              style={{ flexShrink: 0 }}
+            >
+              Join
+            </button>
+          </div>
+        </div>
+
+        {/* Generate a new code */}
+        <button
+          className="btn btn-ghost btn-sm"
+          onClick={handleGenerateNewCode}
+          style={{ marginBottom: '0.25rem' }}
+        >
+          🔄 Generate new household code
+        </button>
+
+        {householdMsg && (
+          <div className="alert alert-info" style={{ marginTop: '0.5rem' }}>
+            {householdMsg}
+          </div>
+        )}
+      </div>
+
       {/* Season History */}
       <div className="card page-section">
         <div className="card-header">
@@ -195,6 +482,25 @@ export function Settings() {
       >
         Re-run Setup Wizard
       </button>
+
+      {/* Danger Zone */}
+      <div className="card page-section danger-zone" style={{ marginTop: '1.5rem' }}>
+        <div className="card-header">
+          <div className="card-title" style={{ color: 'var(--color-danger)' }}>Danger Zone</div>
+        </div>
+        <p className="text-sm text-muted" style={{ marginBottom: '1rem' }}>
+          Permanently wipe all garden data and start over from scratch. Export a backup first
+          if you want to keep a copy of your data.
+        </p>
+        <button
+          className="btn btn-full"
+          style={{ background: 'var(--color-danger)', color: '#fff', opacity: resetting ? 0.6 : 1 }}
+          onClick={() => void handleResetAll()}
+          disabled={resetting}
+        >
+          {resetting ? 'Resetting…' : '🗑️ Reset Everything & Start Fresh'}
+        </button>
+      </div>
     </div>
   );
 }

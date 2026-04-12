@@ -5,6 +5,11 @@ import { SEED_CATALOG } from '../catalog/seeds';
 import { getFrostDateObjects } from '../catalog/frostDates';
 import { TASK_ICONS } from '../utils/plantingSchedule';
 import type { ActivityType, PlantStage } from '../types';
+import { getPlantingWindow, resolveFrostDates } from '../utils/plantingWindow';
+import { PlantingWindowBadge } from '../components/PlantingWindowBadge';
+import { WeatherStrip } from '../components/WeatherStrip';
+import { detectAllGaps } from '../utils/successionGaps';
+import { GapSuggestionsPanel } from '../components/GapSuggestionsPanel';
 
 // ─── Helpers ──────────────────────────────────────────────────
 
@@ -93,7 +98,7 @@ function CompactFrost() {
 
 export function Dashboard() {
   const navigate = useNavigate();
-  const { tasks, garden, activityLogs, logActivity, completeTask } = useGardenStore();
+  const { tasks, garden, activityLogs, logActivity, completeTask, settings } = useGardenStore();
   const [loggedType, setLoggedType] = useState<ActivityType | null>(null);
   const [quickLogBedId, setQuickLogBedId] = useState('');
 
@@ -102,6 +107,25 @@ export function Dashboard() {
   const in14 = addDays(t, 14);
 
   const beds = garden?.beds ?? [];
+
+  const today2 = useMemo(() => { const d = new Date(); d.setHours(0,0,0,0); return d; }, []);
+  const frosts = useMemo(() =>
+    resolveFrostDates(
+      settings.lastFrostDate ?? null,
+      settings.firstFallFrostDate ?? null,
+      settings.zipcode ?? '',
+      today2.getFullYear(),
+      getFrostDateObjects
+    ), [settings, today2]);
+
+  const gaps = useMemo(() => {
+    if (!garden || !frosts) return [];
+    try {
+      return detectAllGaps(garden.beds, tasks, frosts.firstFrost, today2);
+    } catch {
+      return [];
+    }
+  }, [garden, tasks, frosts, today2]);
 
   // ── Tasks bucketed by window ─────────────────────────────────
   const { overdue, thisWeek, upcoming, allThisWeekCount } = useMemo(() => {
@@ -134,6 +158,7 @@ export function Dashboard() {
       bedName: string;
       seedName: string;
       seedIcon: string;
+      plantId: string;
       stage: PlantStage;
       harvestTask?: (typeof tasks)[0];
     }[] = [];
@@ -147,11 +172,13 @@ export function Dashboard() {
         const harvestTask = tasks.find(
           (tk) => tk.slotId === slot.id && tk.type === 'harvest' && !tk.completed
         );
-        result.push({ slotId: slot.id, bedName: bed.name, seedName: seed.name, seedIcon: seed.icon, stage, harvestTask });
+        result.push({ slotId: slot.id, bedName: bed.name, seedName: seed.name, seedIcon: seed.icon, plantId: seed.id, stage, harvestTask });
       }
     }
     return result;
   }, [beds, tasks]);
+
+  const hasInGroundPlants = activePlantings.length > 0;
 
   // ── Upcoming transplants (ready-to-transplant or seeds-started) ─
   const readyToAction = useMemo(() => {
@@ -211,6 +238,10 @@ export function Dashboard() {
       </div>
 
       <CompactFrost />
+      <WeatherStrip
+        zipcode={settings.zipcode ?? ''}
+        hasInGroundPlants={hasInGroundPlants}
+      />
 
       {/* ── Overdue ─────────────────────────────────────────── */}
       {overdue.length > 0 && (
@@ -284,9 +315,25 @@ export function Dashboard() {
                         : fmtShort(harvest)}
                   </div>
                 )}
+                {harvest && daysToHarvest !== null && daysToHarvest < -14 && (
+                  <div className="dash-overdue-harvest">⚠️ Overdue</div>
+                )}
+                {frosts && (() => {
+                  const seed = SEED_CATALOG.find(s => s.id === p.plantId);
+                  if (!seed) return null;
+                  const pw = getPlantingWindow(seed, frosts.lastFrost, frosts.firstFrost, today2);
+                  if (pw.status !== 'in-season' && pw.status !== 'too-late') return null;
+                  return <PlantingWindowBadge key="pw" window={pw} variant="dot" />;
+                })()}
               </div>
             );
           })}
+        </div>
+      )}
+
+      {gaps.length > 0 && (
+        <div className="dash-section">
+          <GapSuggestionsPanel gaps={gaps} variant="dashboard" />
         </div>
       )}
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useGardenStore } from '../store/useGardenStore';
-import type { ActivityType } from '../types';
+import type { ActivityType, YieldUnit } from '../types';
 import { toIsoDate, parseIsoDate } from '../catalog/frostDates';
 
 interface ActivityOption {
@@ -28,6 +28,8 @@ export function ActivityLog() {
     date: toIsoDate(new Date()),
     bedId: '',
     note: '',
+    yieldAmount: '',
+    yieldUnit: 'lbs' as YieldUnit,
   });
 
   const beds = garden?.beds ?? [];
@@ -38,8 +40,10 @@ export function ActivityLog() {
       date: form.date,
       bedId: form.bedId || undefined,
       note: form.note,
+      yieldAmount: form.type === 'harvested' && form.yieldAmount !== '' ? parseFloat(form.yieldAmount) : undefined,
+      yieldUnit: form.type === 'harvested' && form.yieldAmount !== '' ? form.yieldUnit : undefined,
     });
-    setForm({ type: 'watered', date: toIsoDate(new Date()), bedId: '', note: '' });
+    setForm({ type: 'watered', date: toIsoDate(new Date()), bedId: '', note: '', yieldAmount: '', yieldUnit: 'lbs' });
     setShowForm(false);
   }
 
@@ -91,6 +95,11 @@ export function ActivityLog() {
                         {bed && <span className="log-bed">{bed.name}</span>}
                       </div>
                       {log.note && <div className="log-note">{log.note}</div>}
+                      {log.yieldAmount != null && (
+                        <div className="log-yield">
+                          🧺 {log.yieldAmount} {log.yieldUnit}
+                        </div>
+                      )}
                     </div>
                     <button
                       className="btn btn-ghost btn-sm"
@@ -155,6 +164,35 @@ export function ActivityLog() {
                     </option>
                   ))}
                 </select>
+              </div>
+            )}
+
+            {form.type === 'harvested' && (
+              <div className="form-group">
+                <label className="form-label">Yield (optional)</label>
+                <div className="yield-input-row">
+                  <input
+                    type="number"
+                    className="form-input"
+                    placeholder="e.g. 2.5"
+                    min="0"
+                    step="0.1"
+                    value={form.yieldAmount}
+                    onChange={(e) => setForm({ ...form, yieldAmount: e.target.value })}
+                    style={{ flex: 2 }}
+                  />
+                  <select
+                    className="form-select"
+                    value={form.yieldUnit}
+                    onChange={(e) => setForm({ ...form, yieldUnit: e.target.value as YieldUnit })}
+                    style={{ flex: 1 }}
+                  >
+                    <option value="lbs">lbs</option>
+                    <option value="kg">kg</option>
+                    <option value="count">count</option>
+                    <option value="bunches">bunches</option>
+                  </select>
+                </div>
               </div>
             )}
 

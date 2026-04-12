@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useGardenStore } from '../store/useGardenStore';
 import { SEED_CATALOG } from '../catalog/seeds';
 import { BedGrid } from '../components/BedGrid';
 import type { GardenSeason, ActivityLog, ActivityType } from '../types';
+import { summarizeYieldByCrop } from '../utils/yieldSummary';
 
 const ACTIVITY_ICONS: Record<ActivityType, string> = {
   watered: '💧',
@@ -163,7 +164,7 @@ function SeasonCard({
           {season.gardenSnapshot.beds.length} beds ·{' '}
           {uniquePlants.size} plant type{uniquePlants.size !== 1 ? 's' : ''} ·{' '}
           {totalSlots} placements ·{' '}
-          {season.activitySnapshot.length} log entries
+          {(season.activitySnapshot ?? []).length} log entries
         </div>
         {season.notes && (
           <div className="season-notes">"{season.notes}"</div>
@@ -212,6 +213,17 @@ function SeasonDetail({
     acc[l.type] = (acc[l.type] ?? 0) + 1;
     return acc;
   }, {});
+
+  const seedMap = useMemo(() => {
+    const m = new Map<string, import('../catalog/seeds').CatalogSeed>();
+    SEED_CATALOG.forEach(s => m.set(s.id, s));
+    return m;
+  }, []);
+
+  const yieldSummary = useMemo(() =>
+    summarizeYieldByCrop(season.activitySnapshot, seedMap, season.gardenSnapshot.beds),
+    [season, seedMap]
+  );
 
   return (
     <div className="page">
@@ -314,6 +326,23 @@ function SeasonDetail({
               </span>
             ))}
           </div>
+
+          {yieldSummary.length > 0 && (
+            <div className="yield-summary-card">
+              <div className="section-label" style={{ marginBottom: '0.5rem' }}>🧺 Harvest totals</div>
+              {yieldSummary.map((crop) => (
+                <div key={crop.plantId} className="yield-row">
+                  <span className="yield-icon">{crop.icon}</span>
+                  <span className="yield-crop">{crop.cropName}</span>
+                  <span className="yield-total">
+                    {crop.totalLbs != null && `${crop.totalLbs} lbs`}
+                    {crop.totalLbs != null && crop.totalCount != null && ' + '}
+                    {crop.totalCount != null && `${crop.totalCount} ${crop.entries[0]?.unit ?? ''}`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
 
           {season.activitySnapshot.length === 0 ? (
             <div className="empty-state">

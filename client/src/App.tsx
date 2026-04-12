@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useGardenStore } from './store/useGardenStore';
 import { resolveAdapter } from './adapters';
+import { registerServiceWorker, notifyTodayTasks, maybeFireWeeklyDigest } from './utils/notifications';
 import { Nav } from './components/Nav';
 import { Setup } from './pages/Setup';
 import { Planner } from './pages/Planner';
@@ -11,6 +12,7 @@ import { ActivityLog } from './pages/ActivityLog';
 import { Settings } from './pages/Settings';
 import { Seasons } from './pages/Seasons';
 import { Dashboard } from './pages/Dashboard';
+import { ShareView } from './pages/ShareView';
 
 export default function App() {
   const { init, settings, loading } = useGardenStore();
@@ -21,6 +23,29 @@ export default function App() {
       init(adapter).then(() => setAdapterReady(true));
     });
   }, [init]);
+
+  useEffect(() => {
+    if (!adapterReady) return;
+
+    // Register service worker and fire today's notifications
+    void (async () => {
+      await registerServiceWorker();
+
+      const { tasks, settings: s } = useGardenStore.getState();
+      if (!s.notificationsEnabled) return;
+
+      const todayIso = new Date().toISOString().slice(0, 10);
+      const todayTasks = tasks.filter(t => !t.completed && t.date === todayIso);
+
+      if (todayTasks.length > 0) {
+        await notifyTodayTasks(todayTasks);
+      }
+
+      if (s.weeklyDigestEnabled) {
+        await maybeFireWeeklyDigest(tasks);
+      }
+    })();
+  }, [adapterReady]);
 
   if (!adapterReady || loading) {
     return (
@@ -43,6 +68,7 @@ export default function App() {
     <div className="app-shell">
       <Routes>
         <Route path="/setup" element={<Setup />} />
+        <Route path="/share/:data" element={<ShareView />} />
         <Route
           path="/*"
           element={

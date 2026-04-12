@@ -5,6 +5,7 @@ import type {
   Garden,
   Bed,
   PlantSlot,
+  PlotFeature,
   UserSeed,
   Task,
   ActivityLog,
@@ -12,13 +13,13 @@ import type {
   ExportBundle,
   SunExposure,
   NorthEdge,
+  CatalogSeed,
 } from '../types';
 import type { StorageAdapter } from '../adapters/StorageAdapter';
 import { DEFAULT_SETTINGS } from '../adapters/StorageAdapter';
 import { SEED_CATALOG } from '../catalog/seeds';
 import { getFrostDateObjects, parseIsoDate } from '../catalog/frostDates';
 import { generateAllTasks } from '../utils/plantingSchedule';
-import { slotWidthCells, slotLengthCells } from '../utils/spacingCalc';
 
 // ─── State Shape ──────────────────────────────────────────────
 
@@ -27,6 +28,7 @@ interface GardenState {
   settings: Settings;
   garden: Garden | null;
   userSeeds: UserSeed[];
+  customSeeds: CatalogSeed[];
   tasks: Task[];
   activityLogs: ActivityLog[];
   seasons: GardenSeason[];
@@ -59,8 +61,17 @@ interface GardenActions {
   updateUserSeed(seed: UserSeed): Promise<void>;
   removeUserSeed(id: string): Promise<void>;
 
+  /** Custom seed varieties added by the user (not in the built-in catalog). */
+  addCustomSeed(seed: CatalogSeed): Promise<void>;
+  deleteCustomSeed(id: string): Promise<void>;
+
   logActivity(log: Omit<ActivityLog, 'id'>): Promise<void>;
   deleteActivityLog(id: string): Promise<void>;
+
+  /** In-ground plot features (perennials, trees, berry bushes, etc.) */
+  addPlotFeature(feature: PlotFeature): Promise<void>;
+  updatePlotFeature(feature: PlotFeature): Promise<void>;
+  removePlotFeature(id: string): Promise<void>;
 
   /** Save current garden as a season snapshot (with activity log embedded). */
   archiveCurrentSeason(notes?: string): Promise<void>;
@@ -70,6 +81,12 @@ interface GardenActions {
   exportToFile(): void;
   /** Import from an ExportBundle JSON file — replaces all local data. */
   importFromFile(bundle: ExportBundle): Promise<void>;
+  /**
+   * Wipe everything (garden, tasks, activity logs, seeds, seasons) and reset
+   * settings to defaults — keeps storage mode so the user doesn't get locked out.
+   * Does NOT clear the household ID in localStorage.
+   */
+  resetAll(): Promise<void>;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────
@@ -95,19 +112,27 @@ function getLastFrostDate(settings: Settings): Date {
 function migrateGarden(garden: Garden): Garden {
   return {
     ...garden,
+    plotFeatures: garden.plotFeatures ?? [],
     beds: garden.beds.map((bed) => ({
       ...bed,
       sunExposure: bed.sunExposure ?? ('full-sun' as SunExposure),
       northEdge:   bed.northEdge   ?? ('top'      as NorthEdge),
-      slots: bed.slots.map((slot) => {
-        if (slot.widthCells != null && slot.lengthCells != null) return slot;
-        const seed = SEED_CATALOG.find((s) => s.id === slot.plantId);
-        return {
-          ...slot,
-          widthCells:  seed ? slotWidthCells(seed)  : 1,
-          lengthCells: seed ? slotLengthCells(seed) : 1,
-        };
-      }),
+      trellisType: bed.trellisType ?? 'none',
+      slots: bed.slots.map((slot) => ({
+        ...slot,
+        // All slots are now 1×1 — collapse any old 2×3 blocks so the grid
+        // renders correctly and the planting count is accurate.
+        widthCells:    1,
+        lengthCells:   1,
+        // Recalculate plantsPerSqFt from the catalog in case it's stale.
+        plantsPerSqFt: (() => {
+          const seed = SEED_CATALOG.find((s) => s.id === slot.plantId);
+          if (!seed) return slot.plantsPerSqFt ?? 1;
+          return seed.spacingInches < 12
+            ? Math.max(1, Math.floor((12 / seed.spacingInches) ** 2))
+            : 1;
+        })(),
+      })),
     })),
   };
 }
@@ -119,6 +144,7 @@ export const useGardenStore = create<GardenState & GardenActions>((set, get) => 
   settings: DEFAULT_SETTINGS,
   garden: null,
   userSeeds: [],
+  customSeeds: [],
   tasks: [],
   activityLogs: [],
   seasons: [],
@@ -128,10 +154,11 @@ export const useGardenStore = create<GardenState & GardenActions>((set, get) => 
   async init(adapter) {
     set({ loading: true, adapter });
     try {
-      const [settings, rawGarden, userSeeds, tasks, activityLogs, seasons] = await Promise.all([
+      const [settings, rawGarden, userSeeds, customSeeds, tasks, activityLogs, seasons] = await Promise.all([
         adapter.getSettings(),
         adapter.getGarden(),
         adapter.getUserSeeds(),
+        adapter.getCustomSeeds(),
         adapter.getTasks(),
         adapter.getActivityLogs(),
         adapter.getSeasons(),
@@ -144,7 +171,7 @@ export const useGardenStore = create<GardenState & GardenActions>((set, get) => 
         await adapter.saveGarden(garden);
       }
 
-      set({ settings, garden, userSeeds, tasks, activityLogs, seasons, loading: false });
+      set({ settings, garden, userSeeds, customSeeds, tasks, activityLogs, seasons, loading: false });
     } catch (e) {
       set({ error: String(e), loading: false });
     }
@@ -281,6 +308,48 @@ export const useGardenStore = create<GardenState & GardenActions>((set, get) => 
     set((s) => ({ userSeeds: s.userSeeds.filter((u) => u.id !== id) }));
   },
 
+  async addCustomSeed(seed) {
+    await get().adapter!.saveCustomSeed(seed);
+    set((s) => ({
+      customSeeds: [...s.customSeeds.filter((c) => c.id !== seed.id), seed],
+    }));
+  },
+
+  async deleteCustomSeed(id) {
+    await get().adapter!.deleteCustomSeed(id);
+    set((s) => ({ customSeeds: s.customSeeds.filter((c) => c.id !== id) }));
+  },
+
+  async addPlotFeature(feature) {
+    const { garden, adapter } = get();
+    if (!garden || !adapter) return;
+    const updated: Garden = { ...garden, plotFeatures: [...(garden.plotFeatures ?? []), feature] };
+    await adapter.saveGarden(updated);
+    set({ garden: updated });
+  },
+
+  async updatePlotFeature(feature) {
+    const { garden, adapter } = get();
+    if (!garden || !adapter) return;
+    const updated: Garden = {
+      ...garden,
+      plotFeatures: (garden.plotFeatures ?? []).map((f) => (f.id === feature.id ? feature : f)),
+    };
+    await adapter.saveGarden(updated);
+    set({ garden: updated });
+  },
+
+  async removePlotFeature(id) {
+    const { garden, adapter } = get();
+    if (!garden || !adapter) return;
+    const updated: Garden = {
+      ...garden,
+      plotFeatures: (garden.plotFeatures ?? []).filter((f) => f.id !== id),
+    };
+    await adapter.saveGarden(updated);
+    set({ garden: updated });
+  },
+
   async logActivity(data) {
     const log: ActivityLog = { ...data, id: uuidv4() };
     await get().adapter!.saveActivityLog(log);
@@ -374,5 +443,41 @@ export const useGardenStore = create<GardenState & GardenActions>((set, get) => 
       adapter.getSeasons(),
     ]);
     set({ settings, garden, userSeeds, tasks, activityLogs, seasons });
+  },
+
+  async resetAll() {
+    const { adapter, settings } = get();
+    if (!adapter) return;
+
+    // Wipe all storage-layer data first
+    await adapter.resetAll();
+
+    // Restore a minimal valid state — keep storageMode/apiBaseUrl so the
+    // user doesn't get locked out of their backend.
+    const freshSettings = {
+      ...DEFAULT_SETTINGS,
+      storageMode: settings.storageMode,
+      apiBaseUrl:  settings.apiBaseUrl,
+    };
+    await adapter.saveSettings(freshSettings);
+
+    const freshGarden: Garden = {
+      id: crypto.randomUUID(),
+      name: 'My Garden',
+      year: new Date().getFullYear(),
+      beds: [],
+      plotFeatures: [],
+    };
+    await adapter.saveGarden(freshGarden);
+
+    set({
+      settings:     freshSettings,
+      garden:       freshGarden,
+      userSeeds:    [],
+      customSeeds:  [],
+      tasks:        [],
+      activityLogs: [],
+      seasons:      [],
+    });
   },
 }));

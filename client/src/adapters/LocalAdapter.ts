@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie';
-import type { Settings, Garden, UserSeed, Task, ActivityLog, GardenSeason } from '../types';
+import type { Settings, Garden, UserSeed, Task, ActivityLog, GardenSeason, CatalogSeed } from '../types';
 import type { StorageAdapter } from './StorageAdapter';
 import { DEFAULT_SETTINGS } from './StorageAdapter';
 
@@ -22,6 +22,7 @@ class GardenDb extends Dexie {
   tasks!: Table<Task, string>;
   activityLogs!: Table<ActivityLog, string>;
   seasons!: Table<GardenSeason, string>;
+  customSeeds!: Table<CatalogSeed, string>;
 
   constructor() {
     super('GardenApp');
@@ -32,6 +33,12 @@ class GardenDb extends Dexie {
       tasks: 'id, date, completed',
       activityLogs: 'id, date, bedId',
       seasons: 'id, year',
+    });
+    this.version(2).stores({
+      activityLogs: 'id, date, bedId, type',
+    });
+    this.version(3).stores({
+      customSeeds: 'id, category',
     });
   }
 }
@@ -109,5 +116,31 @@ export class LocalAdapter implements StorageAdapter {
 
   async saveSeason(season: GardenSeason): Promise<void> {
     await db.seasons.put(season);
+  }
+
+  async getCustomSeeds(): Promise<CatalogSeed[]> {
+    return db.customSeeds.toArray();
+  }
+
+  async saveCustomSeed(seed: CatalogSeed): Promise<void> {
+    await db.customSeeds.put(seed);
+  }
+
+  async deleteCustomSeed(id: string): Promise<void> {
+    await db.customSeeds.delete(id);
+  }
+
+  async resetAll(): Promise<void> {
+    await db.transaction('rw', db.settings, db.gardens, db.userSeeds, db.tasks, db.activityLogs, db.seasons, db.customSeeds, async () => {
+      await Promise.all([
+        db.settings.clear(),
+        db.gardens.clear(),
+        db.userSeeds.clear(),
+        db.tasks.clear(),
+        db.activityLogs.clear(),
+        db.seasons.clear(),
+        db.customSeeds.clear(),
+      ]);
+    });
   }
 }

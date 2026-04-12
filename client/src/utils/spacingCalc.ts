@@ -1,57 +1,46 @@
 import type { CatalogSeed, PlantSlot, PlantStage } from '../types';
 
-// ─── Rectangle Dimensions ─────────────────────────────────────
+// ─── Slot Size ────────────────────────────────────────────────
+//
+// Each plant slot occupies exactly ONE grid cell regardless of spacing.
+//
+// Why: a 4×8 raised bed has ~32 meaningful planting positions.  If a
+// tomato (24″ spacing) were allowed to claim a 2×2 block, you could only
+// fit 8 plants on that entire visual grid — which makes it impossible to
+// plan a realistically planted bed.  Instead:
+//
+//   • 1 cell = 1 planting position (one plant, one spot in the row).
+//   • spacing info is kept as metadata for task generation, companion
+//     plant warnings, and the density label (×N for tight crops).
+//
+// The user can decide how many plants to place: they drag-and-drop each
+// one individually, which directly maps to the count they intend to grow.
 
-/**
- * How many grid columns (width) one planting of this seed occupies.
- *
- * Formula: ceil(spacingInches / 12)
- *   Carrot  3"  → 1 col   (fits multiple per sqft)
- *   Lettuce 8"  → 1 col
- *   Pepper  18" → 2 cols
- *   Tomato  24" → 2 cols
- *   Squash  36" → 3 cols
- */
-export function slotWidthCells(seed: CatalogSeed): number {
-  return Math.max(1, Math.ceil(seed.spacingInches / 12));
+export function slotWidthCells(_seed: CatalogSeed): number {
+  return 1;
 }
 
-/**
- * How many grid rows (length) one planting of this seed occupies.
- *
- * Formula: ceil(rowSpacingInches / 12)
- *   Carrot  rows 12" → 1 row
- *   Tomato  rows 36" → 3 rows
- *   Squash  rows 48" → 4 rows
- */
-export function slotLengthCells(seed: CatalogSeed): number {
-  return Math.max(1, Math.ceil(seed.rowSpacingInches / 12));
+export function slotLengthCells(_seed: CatalogSeed): number {
+  return 1;
 }
 
 // ─── Density ─────────────────────────────────────────────────
 
 /**
- * For plants where both widthCells and lengthCells are 1 (tight spacing),
- * how many individual plants fit in that one square foot?
+ * For tight-spacing plants (< 12 in), how many plants fit in one
+ * 1 sq-ft cell (Square Foot Gardening formula).
  *
- * Uses the Square Foot Gardening formula: (12 / spacingInches)²
- * Clamped to integers ≥ 1.
+ * For all other plants: 1 — each cell represents one individual plant.
  */
 export function plantsPerSqFt(seed: CatalogSeed): number {
-  if (slotWidthCells(seed) > 1 || slotLengthCells(seed) > 1) {
-    // Large plant — one plant per the entire rectangle
-    return 1;
+  if (seed.spacingInches < 12) {
+    return Math.max(1, Math.floor((12 / seed.spacingInches) ** 2));
   }
-  return Math.max(1, Math.floor((12 / seed.spacingInches) ** 2));
+  return 1;
 }
 
 // ─── Slot Builder ─────────────────────────────────────────────
 
-/**
- * Builds the data portion of a PlantSlot from seed + position.
- * All spacing-derived fields are calculated here so the rest
- * of the app never has to repeat the math.
- */
 export function buildSlot(
   seed: CatalogSeed,
   cellX: number,
@@ -64,8 +53,8 @@ export function buildSlot(
     cellX,
     cellY,
     plantId: seed.id,
-    widthCells: slotWidthCells(seed),
-    lengthCells: slotLengthCells(seed),
+    widthCells:    1,
+    lengthCells:   1,
     plantsPerSqFt: plantsPerSqFt(seed),
     weekOffset,
     stage,
@@ -76,20 +65,15 @@ export function buildSlot(
 // ─── Cell Geometry ────────────────────────────────────────────
 
 /**
- * Returns every {x, y} cell that this slot occupies, as a proper rectangle.
- * The origin (cellX, cellY) is always included.
+ * Returns every {x, y} cell that this slot occupies.
+ * Always a single cell (1×1) — widthCells/lengthCells stored on old
+ * records may be >1, but we normalise here so the grid renders correctly.
  */
 export function occupiedCells(slot: PlantSlot): Array<{ x: number; y: number }> {
-  const cells: Array<{ x: number; y: number }> = [];
-  for (let dy = 0; dy < slot.lengthCells; dy++) {
-    for (let dx = 0; dx < slot.widthCells; dx++) {
-      cells.push({ x: slot.cellX + dx, y: slot.cellY + dy });
-    }
-  }
-  return cells;
+  return [{ x: slot.cellX, y: slot.cellY }];
 }
 
-/** True if this cell coordinate is the origin (top-left) of the slot. */
+/** True if this cell coordinate is the origin of the slot (always true now). */
 export function isOriginCell(slot: PlantSlot, x: number, y: number): boolean {
   return slot.cellX === x && slot.cellY === y;
 }
@@ -97,29 +81,23 @@ export function isOriginCell(slot: PlantSlot, x: number, y: number): boolean {
 // ─── Display Labels ───────────────────────────────────────────
 
 /**
- * Human-readable count for the origin cell label.
+ * Human-readable count for the cell label.
  *
- * Tight plants (1×1):  "×16"   (16 carrots per sqft)
- * Large plants (2×3):  "×1"    (one tomato per 6 sqft block)
+ * Tight plants (< 12 in spacing):  "×9"  (9 carrots per sq ft)
+ * Everything else:                  ""   (one plant, no count needed)
  */
 export function densityLabel(slot: PlantSlot): string {
-  if (slot.widthCells === 1 && slot.lengthCells === 1 && slot.plantsPerSqFt > 1) {
-    return `×${slot.plantsPerSqFt}`;
-  }
-  return '×1';
+  return slot.plantsPerSqFt > 1 ? `×${slot.plantsPerSqFt}` : '';
 }
 
 /**
- * Block-size label for the seed detail / slot confirmation screen.
- * e.g. "1 plant per 6 sq ft (2×3 block)"
+ * Hint shown in the seed detail / slot confirmation UI.
+ * e.g. "9 per sq ft (3 in spacing)" or "1 per sq ft (24 in spacing)"
  */
 export function blockSizeLabel(seed: CatalogSeed): string {
-  const w = slotWidthCells(seed);
-  const l = slotLengthCells(seed);
   const ppsf = plantsPerSqFt(seed);
-
-  if (w === 1 && l === 1) {
-    return ppsf > 1 ? `${ppsf} plants per sq ft` : '1 plant per sq ft';
+  if (ppsf > 1) {
+    return `${ppsf} plants per sq ft (${seed.spacingInches}" spacing)`;
   }
-  return `1 plant per ${w * l} sq ft (${w}×${l} block)`;
+  return `1 plant per cell (${seed.spacingInches}" spacing)`;
 }

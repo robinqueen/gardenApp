@@ -4,29 +4,36 @@ namespace GardenApp.Api.Models;
 
 // ─── Settings ─────────────────────────────────────────────────
 
+/// <summary>
+/// One row per household. The PK is the household ID (e.g. "default", "ABC12345").
+/// </summary>
 public class SettingsRecord
 {
+    /// <summary>Household ID — doubles as the primary key.</summary>
     [Key]
-    public string Id { get; set; } = "singleton";
+    public string Id { get; set; } = "default";
     public string Zipcode { get; set; } = string.Empty;
     public string? LastFrostDate { get; set; }
     public string? FirstFallFrostDate { get; set; }
     public string StorageMode { get; set; } = "local";
     public string ApiBaseUrl { get; set; } = string.Empty;
     public bool SetupComplete { get; set; }
+    public int? PlotWidthFt { get; set; }
+    public int? PlotLengthFt { get; set; }
+    public string? PlotTopEdge { get; set; }
 }
 
 // ─── Garden ───────────────────────────────────────────────────
 
 /// <summary>
-/// The garden is stored as a single JSON document (one row per user).
-/// The nested bed/slot structure lives inside the JSON blob, mirroring
-/// the client-side object graph exactly with no normalization penalty.
+/// The garden is stored as a single JSON document per household.
+/// The PK is the household ID (e.g. "default", "ABC12345").
 /// </summary>
 public class GardenRecord
 {
+    /// <summary>Household ID — doubles as the primary key.</summary>
     [Key]
-    public string Id { get; set; } = "current";
+    public string Id { get; set; } = "default";
     /// <summary>Full garden JSON serialised from the client type.</summary>
     public string DataJson { get; set; } = "{}";
 }
@@ -37,6 +44,8 @@ public class UserSeedRecord
 {
     [Key]
     public string Id { get; set; } = Guid.NewGuid().ToString();
+    /// <summary>Which household this seed record belongs to.</summary>
+    public string HouseholdId { get; set; } = "default";
     public string SeedId { get; set; } = string.Empty;
     public bool Owned { get; set; }
     public int PurchaseYear { get; set; }
@@ -49,6 +58,8 @@ public class TaskRecord
 {
     [Key]
     public string Id { get; set; } = Guid.NewGuid().ToString();
+    /// <summary>Which household this task belongs to.</summary>
+    public string HouseholdId { get; set; } = "default";
     public string Date { get; set; } = string.Empty;
     public string Type { get; set; } = string.Empty;
     public string? PlantId { get; set; }
@@ -66,11 +77,15 @@ public class ActivityLogRecord
 {
     [Key]
     public string Id { get; set; } = Guid.NewGuid().ToString();
+    /// <summary>Which household this activity log belongs to.</summary>
+    public string HouseholdId { get; set; } = "default";
     public string Date { get; set; } = string.Empty;
     public string? BedId { get; set; }
     public string? SlotId { get; set; }
     public string Type { get; set; } = string.Empty;
     public string Note { get; set; } = string.Empty;
+    public double? YieldAmount { get; set; }
+    public string? YieldUnit { get; set; }
 }
 
 // ─── Garden Season ────────────────────────────────────────────
@@ -79,8 +94,12 @@ public class GardenSeasonRecord
 {
     [Key]
     public string Id { get; set; } = Guid.NewGuid().ToString();
+    /// <summary>Which household this season archive belongs to.</summary>
+    public string HouseholdId { get; set; } = "default";
     public int Year { get; set; }
     /// <summary>Full garden snapshot JSON.</summary>
     public string GardenSnapshotJson { get; set; } = "{}";
+    public string ActivitySnapshotJson { get; set; } = "[]";
+    public string Notes { get; set; } = string.Empty;
     public string CreatedAt { get; set; } = DateTime.UtcNow.ToString("o");
 }

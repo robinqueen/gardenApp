@@ -215,7 +215,7 @@ function SeasonDetail({
   }, {});
 
   const seedMap = useMemo(() => {
-    const m = new Map<string, import('../catalog/seeds').CatalogSeed>();
+    const m = new Map<string, import('../types').CatalogSeed>();
     SEED_CATALOG.forEach(s => m.set(s.id, s));
     return m;
   }, []);

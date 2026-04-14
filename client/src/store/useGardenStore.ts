@@ -411,7 +411,7 @@ export const useGardenStore = create<GardenState & GardenActions>((set, get) => 
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `gardenapp-${new Date().getFullYear()}-backup.json`;
+    a.download = `mylivinggarden-${new Date().getFullYear()}-backup.json`;
     a.click();
     URL.revokeObjectURL(url);
   },

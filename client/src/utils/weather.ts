@@ -17,8 +17,8 @@ export interface WeatherFeed {
 }
 
 const CACHE_TTL_MS = 3 * 60 * 60 * 1000; // 3 hours
-const LATLON_KEY = (zip: string) => `gardenapp-latlon-${zip}`;
-const WEATHER_KEY = (zip: string) => `gardenapp-weather-${zip}`;
+const LATLON_KEY = (zip: string) => `mylivinggarden-latlon-${zip}`;
+const WEATHER_KEY = (zip: string) => `mylivinggarden-weather-${zip}`;
 
 // WMO code → emoji
 export function weatherEmoji(code: number): string {
@@ -59,7 +59,7 @@ async function getLatLon(zipcode: string): Promise<{ lat: number; lng: number }>
 
   const url = `https://nominatim.openstreetmap.org/search?postalcode=${encodeURIComponent(zipcode)}&countrycodes=us&format=json&limit=1`;
   const res = await fetch(url, {
-    headers: { 'User-Agent': 'GardenApp/1.0 (garden planning app)' },
+    headers: { 'User-Agent': 'MyLivingGarden/1.0 (mylivinggarden.com)' },
   });
 
   if (!res.ok) throw new Error(`Geocoding failed: ${res.status}`);

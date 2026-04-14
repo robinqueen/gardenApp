@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useGardenStore } from '../store/useGardenStore';
 import { getFrostDateObjects, formatDate } from '../catalog/frostDates';
 import type { ExportBundle } from '../types';
@@ -12,6 +12,8 @@ import {
 } from '../utils/notifications';
 import { getHouseholdId, setHouseholdId, generateNewHouseholdId } from '../utils/household';
 import { clearAdapterCache } from '../adapters';
+
+const APP_VERSION = '1.0.0';
 
 export function Settings() {
   const navigate = useNavigate();
@@ -103,7 +105,7 @@ export function Settings() {
     await notifyTodayTasks([{
       id: 'test',
       title: 'Test notification',
-      description: 'Garden App notifications are working!',
+      description: 'My Living Garden notifications are working!',
       date: new Date().toISOString().slice(0, 10),
       type: 'custom',
     }]);
@@ -482,6 +484,28 @@ export function Settings() {
       >
         Re-run Setup Wizard
       </button>
+
+      {/* About & Legal */}
+      <div className="card page-section">
+        <div className="card-header">
+          <div className="card-title">About My Living Garden</div>
+          <div className="text-muted text-sm">v{APP_VERSION} · Early access</div>
+        </div>
+        <div className="about-legal-list">
+          <Link to="/terms" className="about-legal-row">
+            <span>📄 Terms of Service</span>
+            <span className="about-legal-chevron">›</span>
+          </Link>
+          <Link to="/privacy" className="about-legal-row">
+            <span>🔒 Privacy Policy</span>
+            <span className="about-legal-chevron">›</span>
+          </Link>
+          <Link to="/credits" className="about-legal-row">
+            <span>🙏 Credits &amp; Licenses</span>
+            <span className="about-legal-chevron">›</span>
+          </Link>
+        </div>
+      </div>
 
       {/* Danger Zone */}
       <div className="card page-section danger-zone" style={{ marginTop: '1.5rem' }}>

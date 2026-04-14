@@ -13,6 +13,10 @@ interface PlantPickerProps {
   bed: Bed;
   onPlace: (slot: ReturnType<typeof buildSlot>) => void;
   onCancel: () => void;
+  /** If provided, opens directly in edit/view mode for an existing slot. */
+  editingSlot?: import('../types').PlantSlot;
+  /** Called when the user removes the plant in edit mode. */
+  onRemove?: () => void;
 }
 
 // ─── Stage metadata ───────────────────────────────────────────
@@ -109,16 +113,22 @@ function plantedIds(bed: Bed): string[] {
 
 // ─── Component ────────────────────────────────────────────────
 
-export function PlantPicker({ cellX, cellY, bed, onPlace, onCancel }: PlantPickerProps) {
+export function PlantPicker({ cellX, cellY, bed, onPlace, onCancel, editingSlot, onRemove }: PlantPickerProps) {
   const customSeeds   = useGardenStore((s) => s.customSeeds);
   const addCustomSeed = useGardenStore((s) => s.addCustomSeed);
   const delCustomSeed = useGardenStore((s) => s.deleteCustomSeed);
 
+  const isEditing = !!editingSlot;
+
   const [query, setQuery]           = useState('');
-  const [selected, setSelected]     = useState<CatalogSeed | null>(null);
-  const [weekOffset, setWeekOffset] = useState(0);
-  const [stage, setStage]           = useState<PlantStage>('planned');
-  const [stageDate, setStageDate]   = useState(toIsoDate(new Date()));
+  // When editing, pre-select the existing plant from the slot
+  const [selected, setSelected]     = useState<CatalogSeed | null>(() => {
+    if (!editingSlot) return null;
+    return [...SEED_CATALOG, ...customSeeds].find((s) => s.id === editingSlot.plantId) ?? null;
+  });
+  const [weekOffset, setWeekOffset] = useState(editingSlot?.weekOffset ?? 0);
+  const [stage, setStage]           = useState<PlantStage>(() => editingSlot?.stage ?? 'planned');
+  const [stageDate, setStageDate]   = useState(editingSlot?.stageDate ?? toIsoDate(new Date()));
 
   // View: 'browse' | 'add-custom'
   const [view, setView] = useState<'browse' | 'add-custom'>('browse');
@@ -387,6 +397,14 @@ export function PlantPicker({ cellX, cellY, bed, onPlace, onCancel }: PlantPicke
               <span>Grid footprint</span>
               <span>{blockSizeLabel(selected)}</span>
             </div>
+            {selected.spacingInches >= 24 && (
+              <div className="slot-detail-row">
+                <span>Real space needed</span>
+                <span style={{ color: '#b45309' }}>
+                  📐 ~{(selected.spacingInches / 12).toFixed(1).replace(/\.0$/, '')}×{(selected.rowSpacingInches / 12).toFixed(1).replace(/\.0$/, '')} ft — plan for sprawl or trellis
+                </span>
+              </div>
+            )}
             <div className="slot-detail-row">
               <span>Days to harvest</span>
               <span>~{selected.daysToMaturity} days</span>
@@ -473,10 +491,15 @@ export function PlantPicker({ cellX, cellY, bed, onPlace, onCancel }: PlantPicke
           )}
 
           <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.75rem' }}>
-            <button className="btn btn-ghost" onClick={() => setSelected(null)}>
+            <button className="btn btn-ghost" onClick={isEditing ? onCancel : () => setSelected(null)}>
               ← Back
             </button>
-            {isCustom && (
+            {isEditing && onRemove && (
+              <button className="btn btn-danger" onClick={onRemove}>
+                Remove
+              </button>
+            )}
+            {!isEditing && isCustom && (
               <button
                 className="btn btn-ghost"
                 style={{ color: 'var(--color-danger)' }}
@@ -489,7 +512,7 @@ export function PlantPicker({ cellX, cellY, bed, onPlace, onCancel }: PlantPicke
               </button>
             )}
             <button className="btn btn-primary btn-full" onClick={handlePlace}>
-              Place {selected.icon} here
+              {isEditing ? `Update ${selected.icon}` : `Place ${selected.icon} here`}
             </button>
           </div>
         </div>

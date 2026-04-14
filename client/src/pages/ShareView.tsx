@@ -29,7 +29,7 @@ export function ShareView() {
         <p style={{ color: 'var(--color-text-muted)' }}>
           This link may be expired or corrupted.
         </p>
-        <Link to="/" className="btn btn-primary">Open Garden App</Link>
+        <Link to="/" className="btn btn-primary">Open My Living Garden</Link>
       </div>
     );
   }
@@ -124,7 +124,7 @@ export function ShareView() {
       {/* CTA */}
       <div style={{ textAlign: 'center', marginTop: '2rem' }}>
         <Link to="/setup" className="btn btn-primary">
-          🌱 Plan your own garden
+          🌿 Start your own garden →
         </Link>
       </div>
     </div>

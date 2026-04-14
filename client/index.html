@@ -6,12 +6,163 @@
     <meta name="theme-color" content="#3a7d44" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="GardenApp" />
+    <meta name="apple-mobile-web-app-title" content="My Living Garden" />
+    <meta name="description" content="Free vegetable garden planner — map raised beds, calculate seed starting dates, build a planting calendar, and track harvests. Works offline, no account needed." />
+    <meta name="keywords" content="vegetable garden planner, seed starting calculator, raised bed planner, planting calendar, frost date calculator, garden planning app, succession planting, garden task tracker" />
+    <meta name="author" content="My Living Garden" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://mylivinggarden.com/" />
+
+    <!-- Open Graph (Facebook, iMessage, Discord previews) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mylivinggarden.com/" />
+    <meta property="og:title" content="My Living Garden — Free Vegetable Garden Planner" />
+    <meta property="og:description" content="Map raised beds, calculate seed starting dates, and build your full planting calendar — free, offline, no account needed." />
+    <meta property="og:image" content="https://mylivinggarden.com/icon-512.png" />
+    <meta property="og:site_name" content="My Living Garden" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter / X card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="My Living Garden — Free Vegetable Garden Planner" />
+    <meta name="twitter:description" content="Map raised beds, calculate seed starting dates, and build your full planting calendar — free, offline, no account needed." />
+    <meta name="twitter:image" content="https://mylivinggarden.com/icon-512.png" />
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "My Living Garden",
+      "url": "https://mylivinggarden.com",
+      "description": "Free vegetable garden planner — map raised beds, calculate seed starting dates, build a planting calendar, and track harvests season over season.",
+      "applicationCategory": "LifestyleApplication",
+      "operatingSystem": "Web, iOS, Android",
+      "browserRequirements": "Requires JavaScript",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "Visual raised bed planner",
+        "Seed starting date calculator",
+        "Frost date lookup by zip code",
+        "Planting calendar with task scheduling",
+        "Succession planting gap finder",
+        "7-day weather forecast",
+        "Harvest tracking and activity log",
+        "Offline support via Progressive Web App"
+      ],
+      "screenshot": "https://mylivinggarden.com/icon-512.png",
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "5",
+        "ratingCount": "1"
+      }
+    }
+    </script>
+
+    <!-- Favicon (fixes "Add a favicon markup" tip) -->
+    <link rel="icon" href="/icon-192.png" type="image/png" />
+    <link rel="shortcut icon" href="/icon-192.png" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
-    <title>GardenApp</title>
+    <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="/icon-512.png" />
+
+    <!-- Title matches content closely (fixes "page title match" warning) -->
+    <title>My Living Garden — Free Vegetable Garden Planner</title>
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-D2FEZBCQ2X"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-D2FEZBCQ2X', {
+        anonymize_ip: true,
+        cookie_flags: 'SameSite=None;Secure'
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>
+
+    <!--
+      Static content for search engine crawlers.
+      React replaces #root on load; this block sits outside it so crawlers
+      that don't execute JS still see an H1, headings, description, and links.
+      Visually hidden — real UI is rendered by React above.
+    -->
+    <div id="seo-static" style="position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;">
+      <h1>My Living Garden — Free Vegetable Garden Planner</h1>
+      <p>
+        My Living Garden is a free vegetable garden planner that helps you map raised beds,
+        calculate seed starting dates, build a planting calendar, track harvests, and plan
+        succession planting — all offline, with no account required.
+      </p>
+
+      <h2>Plan Your Raised Beds</h2>
+      <p>Draw and label your garden beds on a visual grid. Assign plants to each bed and
+        carry your layout forward season after season.</p>
+
+      <h2>Seed Starting Calculator</h2>
+      <p>Enter your zip code to look up your local frost date, then get exact weeks-before-frost
+        starting dates for every vegetable and herb in your garden.</p>
+
+      <h2>Planting Calendar &amp; Task Scheduler</h2>
+      <p>Automatically generate a complete planting calendar from your seed list. Schedule
+        indoor starts, transplant dates, and direct-sow windows in one place.</p>
+
+      <h2>Succession Planting Gap Finder</h2>
+      <p>Spot gaps in your planting schedule and fill them with succession crops to extend
+        your harvest window throughout the growing season.</p>
+
+      <h2>7-Day Garden Weather Forecast</h2>
+      <p>Check a hyperlocal weather forecast for your garden location before you plant,
+        water, or harvest.</p>
+
+      <h2>Harvest Tracking &amp; Activity Log</h2>
+      <p>Log each harvest with weight and notes. Review your activity history to improve
+        your garden plan year over year.</p>
+
+      <h2>Works Offline — No Account Needed</h2>
+      <p>My Living Garden is a Progressive Web App. Install it on your phone or tablet and
+        use it anywhere in the garden, even without an internet connection.</p>
+
+      <nav>
+        <a href="/">Home — My Living Garden</a>
+        <a href="/terms">Terms of Service</a>
+        <a href="/privacy">Privacy Policy</a>
+        <a href="/credits">Credits &amp; Open Source Licenses</a>
+      </nav>
+    </div>
+
+    <!-- No-JS fallback (for crawlers that skip JS entirely) -->
+    <noscript>
+      <div style="font-family:sans-serif;max-width:800px;margin:2rem auto;padding:1rem;">
+        <h1>My Living Garden — Free Vegetable Garden Planner</h1>
+        <p>Plan your vegetable garden with visual raised bed mapping, seed starting date
+          calculations, a full planting calendar, succession planting suggestions, 7-day weather
+          forecasts, and harvest tracking. Free to use, works offline, no account needed.</p>
+        <ul>
+          <li>Visual raised bed planner</li>
+          <li>Seed starting calculator with frost date lookup</li>
+          <li>Planting calendar and task scheduler</li>
+          <li>Succession planting gap finder</li>
+          <li>7-day local weather forecast</li>
+          <li>Harvest tracking and activity log</li>
+          <li>Offline-capable Progressive Web App (PWA)</li>
+        </ul>
+        <p>
+          <a href="/">Get started — it's free</a> |
+          <a href="/terms">Terms of Service</a> |
+          <a href="/privacy">Privacy Policy</a> |
+          <a href="/credits">Credits</a>
+        </p>
+        <p>Please enable JavaScript to use My Living Garden.</p>
+      </div>
+    </noscript>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

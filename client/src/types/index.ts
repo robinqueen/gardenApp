@@ -177,7 +177,7 @@ export interface Bed {
    * Knowing this lets us warn when tall plants are placed on the sunny (south) side
    * where they would shade shorter plants.
    */
-  northEdge: NorthEdge;
+  northEdge?: NorthEdge;
   slots: PlantSlot[];
   /** Position on the garden plot overview canvas (feet from top-left corner). */
   plotX?: number;
@@ -283,6 +283,35 @@ export interface Settings {
   plotTopEdge?: 'north' | 'east' | 'south' | 'west';
   notificationsEnabled?: boolean;
   weeklyDigestEnabled?: boolean;
+  /**
+   * The seed trays the user actually owns. Drives the tray-count math in the
+   * Seed Start Plan. Stored largest-first by capacity for greedy allocation.
+   */
+  seedTrays?: SeedTray[];
+  /**
+   * How many seeds to put in each cell when starting seeds.
+   * 1 = one seed per cell (standard; needs more cells for safety buffer)
+   * 2 = two seeds per cell (almost guarantees ≥1 germination; thin to 1 later)
+   * Default: 1
+   */
+  seedsPerCell?: 1 | 2;
+  /**
+   * Extra percentage added on top of the calculated cell count so you always
+   * have a few extra transplants in reserve.
+   * e.g. 20 = add 20 % more cells than the base calculation.
+   * Default: 0
+   */
+  seedOverestimatePercent?: 0 | 10 | 20 | 25;
+}
+
+/**
+ * A tray type the user owns for starting seeds.
+ * e.g. { id: '6cell', name: '6-cell pack', capacity: 6 }
+ */
+export interface SeedTray {
+  id: string;
+  name: string;    // "6-cell pack", "16-plug tray", etc.
+  capacity: number; // cells per tray
 }
 
 // ─── Tasks ────────────────────────────────────────────────────
@@ -317,7 +346,7 @@ export interface ActivityLog {
 
 // ─── Export Bundle ────────────────────────────────────────────
 
-/** The shape of a full data export file (gardenapp-export.json). */
+/** The shape of a full data export file (mylivinggarden-YYYY-backup.json). */
 export interface ExportBundle {
   version: 2;
   exportedAt: string;

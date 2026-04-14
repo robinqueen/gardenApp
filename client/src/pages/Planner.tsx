@@ -5,9 +5,20 @@ import { useGardenStore } from '../store/useGardenStore';
 import { BedGrid } from '../components/BedGrid';
 import { GardenPlot } from '../components/GardenPlot';
 import { Garden3DView } from '../components/Garden3DView';
+import { SeedStartPlan } from '../components/SeedStartPlan';
 import { SEED_CATALOG } from '../catalog/seeds';
-import { NORTH_EDGE_OPTIONS, sunLabel, SUN_ICONS } from '../utils/sunWarnings';
-import type { Bed, BedType, SunExposure, NorthEdge, TrellisType, PlotFeature, PlotFeatureType } from '../types';
+import { sunLabel, SUN_ICONS, plotTopEdgeToNorthEdge } from '../utils/sunWarnings';
+import type { Bed, BedType, SunExposure, TrellisType, PlotFeature, PlotFeatureType } from '../types';
+
+// ─── Type labels (dynamic form title + save button) ──────────
+
+const SPACE_TYPE_LABELS: Record<BedType, string> = {
+  raised:         'Raised Bed',
+  inground:       'In-Ground Area',
+  container:      'Container',
+  'planter-box':  'Planter Box',
+  bucket:         'Bucket / Pot',
+};
 
 // ─── Bed Form ─────────────────────────────────────────────────
 
@@ -18,7 +29,6 @@ interface BedFormValues {
   unit: 'ft' | 'in';
   type: BedType;
   sunExposure: SunExposure;
-  northEdge: NorthEdge;
   trellisType: TrellisType;
   trellisPartnerId: string;
 }
@@ -30,7 +40,6 @@ const DEFAULT_BED_FORM: BedFormValues = {
   unit: 'ft',
   type: 'raised',
   sunExposure: 'full-sun',
-  northEdge: 'top',
   trellisType: 'none',
   trellisPartnerId: '',
 };
@@ -83,11 +92,11 @@ const COMMON_PERENNIALS = [
 
 // ─── View ─────────────────────────────────────────────────────
 
-type PlannerView = 'plot' | 'beds' | '3d';
+type PlannerView = 'plot' | 'beds' | '3d' | 'starts';
 
 export function Planner() {
   const navigate = useNavigate();
-  const { garden, addBed, updateBed, deleteBed, addPlotFeature, updatePlotFeature, removePlotFeature } = useGardenStore();
+  const { garden, settings, addBed, updateBed, deleteBed, addPlotFeature, updatePlotFeature, removePlotFeature } = useGardenStore();
 
   const [view, setView] = useState<PlannerView>('plot');
   const [selectedBedId, setSelectedBedId] = useState<string | null>(
@@ -133,7 +142,6 @@ export function Planner() {
       unit: isLikelyInches ? 'in' : 'ft',
       type: bed.type,
       sunExposure: bed.sunExposure,
-      northEdge: bed.northEdge,
       trellisType: bed.trellisType ?? 'none',
       trellisPartnerId: bed.trellisPartnerId ?? '',
     });
@@ -150,7 +158,7 @@ export function Planner() {
       lengthFt:        Math.max(0.5, Math.min(40, Math.round(lFt * 100) / 100)),
       type:            bedForm.type,
       sunExposure:     bedForm.sunExposure,
-      northEdge:       bedForm.northEdge,
+      northEdge:       plotTopEdgeToNorthEdge(settings.plotTopEdge),
       trellisType:     bedForm.trellisType,
       trellisPartnerId: bedForm.trellisPartnerId || undefined,
     };
@@ -250,7 +258,7 @@ export function Planner() {
         <div className="empty-state">
           <div className="empty-icon">🌿</div>
           <h3>No beds yet</h3>
-          <p>Add your first garden bed or in-ground plant to start planning your layout.</p>
+          <p>Add your first bed, container, or in-ground area to start planning your layout.</p>
           <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button className="btn btn-primary" onClick={openAddForm}>+ Add a Bed</button>
             <button className="btn btn-secondary" onClick={openAddFeature}>+ In-Ground Plant</button>
@@ -276,7 +284,7 @@ export function Planner() {
         <h1 className="page-title" style={{ marginBottom: 0 }}>Garden Planner</h1>
         <div style={{ display: 'flex', gap: '0.4rem' }}>
           <button className="btn btn-ghost btn-sm" onClick={openAddFeature} title="Add in-ground plant">🌳</button>
-          <button className="btn btn-secondary btn-sm" onClick={openAddForm}>+ Bed</button>
+          <button className="btn btn-secondary btn-sm" onClick={openAddForm}>+ Add</button>
         </div>
       </div>
 
@@ -287,6 +295,9 @@ export function Planner() {
         </button>
         <button className={`view-toggle-btn${view === 'beds' ? ' active' : ''}`} onClick={() => setView('beds')}>
           🌿 Beds
+        </button>
+        <button className={`view-toggle-btn${view === 'starts' ? ' active' : ''}`} onClick={() => setView('starts')}>
+          🌱 Starts
         </button>
         <button className={`view-toggle-btn${view === '3d' ? ' active' : ''}`} onClick={() => setView('3d')}>
           🌳 3D
@@ -304,6 +315,9 @@ export function Planner() {
       {view === '3d' && (
         <Garden3DView onExit={() => setView('plot')} />
       )}
+
+      {/* ── SEED STARTS VIEW ── */}
+      {view === 'starts' && <SeedStartPlan />}
 
       {/* ── BEDS VIEW ── */}
       {view === 'beds' && (
@@ -461,13 +475,16 @@ function BedFormSheet({
     <div className="modal-overlay" onClick={onCancel}>
       <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
         <div className="modal-handle" />
-        <div className="modal-title">{isEdit ? 'Edit Bed' : 'Add a Bed'}</div>
+        <div className="modal-title">
+          {isEdit ? `Edit ${SPACE_TYPE_LABELS[form.type]}` : `Add ${SPACE_TYPE_LABELS[form.type]}`}
+        </div>
 
+        <div className="modal-scroll">
         <div className="form-group">
           <label className="form-label">Name</label>
           <input
             className="form-input"
-            placeholder="e.g. Left Raised Bed"
+            placeholder="e.g. Front Raised Bed"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             autoFocus
@@ -523,7 +540,7 @@ function BedFormSheet({
         </div>
 
         <div className="form-group">
-          <label className="form-label">Bed type</label>
+          <label className="form-label">Type</label>
           <select className="form-select" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as BedType })}>
             <option value="raised">🪵 Raised Bed</option>
             <option value="inground">🌍 In-Ground Plot</option>
@@ -542,18 +559,6 @@ function BedFormSheet({
           </select>
         </div>
 
-        <div className="form-group">
-          <label className="form-label">🧭 Which edge of this bed faces north?</label>
-          <select className="form-select" value={form.northEdge} onChange={(e) => setForm({ ...form, northEdge: e.target.value as NorthEdge })}>
-            {NORTH_EDGE_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-          <p className="form-hint">
-            Used to detect when tall plants cast shade over shorter neighbours.
-          </p>
-        </div>
-
         {/* Trellis */}
         <div className="form-group">
           <label className="form-label">🌿 Trellis structure</label>
@@ -566,7 +571,7 @@ function BedFormSheet({
 
         {form.trellisType === 'arch' && otherBeds.length > 0 && (
           <div className="form-group">
-            <label className="form-label">Connected to bed</label>
+            <label className="form-label">Connected to space</label>
             <select
               className="form-select"
               value={form.trellisPartnerId}
@@ -581,10 +586,12 @@ function BedFormSheet({
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        </div>{/* end modal-scroll */}
+
+        <div className="modal-actions">
           <button className="btn btn-ghost" onClick={onCancel}>Cancel</button>
           <button className="btn btn-primary btn-full" onClick={onSave} disabled={!form.name.trim()}>
-            {isEdit ? 'Save Changes' : 'Add Bed'}
+            {isEdit ? 'Save Changes' : `Add ${SPACE_TYPE_LABELS[form.type]}`}
           </button>
         </div>
       </div>
@@ -609,6 +616,7 @@ function FeatureFormSheet({
         <div className="modal-handle" />
         <div className="modal-title">{isEdit ? 'Edit Plant' : 'Add In-Ground Plant'}</div>
 
+        <div className="modal-scroll">
         <p className="text-sm text-muted" style={{ marginBottom: '1rem' }}>
           For perennials, trees, and berry bushes planted directly in the ground — not in a bed.
           They'll appear as draggable markers on the plot map.
@@ -683,7 +691,9 @@ function FeatureFormSheet({
           />
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        </div>{/* end modal-scroll */}
+
+        <div className="modal-actions">
           <button className="btn btn-ghost" onClick={onCancel}>Cancel</button>
           <button className="btn btn-primary btn-full" onClick={onSave} disabled={!form.name.trim()}>
             {isEdit ? 'Save Changes' : 'Add to Garden'}

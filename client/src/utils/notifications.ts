@@ -1,6 +1,6 @@
 export type NotificationPermission = 'default' | 'granted' | 'denied';
 
-const WEEKLY_DIGEST_KEY = 'gardenapp-last-digest';
+const WEEKLY_DIGEST_KEY = 'mylivinggarden-last-digest';
 
 /**
  * Checks if the browser supports notifications and service workers.

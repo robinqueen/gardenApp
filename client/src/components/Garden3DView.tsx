@@ -413,7 +413,7 @@ function VirtualJoystick({ onMove }: VirtualJoystickProps) {
 
   const RADIUS = 44; // px — half the base size
 
-  function getOffset(touch: Touch): { x: number; y: number } {
+  function getOffset(touch: React.Touch | Touch): { x: number; y: number } {
     const base = baseRef.current;
     if (!base) return { x: 0, y: 0 };
     const rect = base.getBoundingClientRect();

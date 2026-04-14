@@ -13,6 +13,10 @@ import { Settings } from './pages/Settings';
 import { Seasons } from './pages/Seasons';
 import { Dashboard } from './pages/Dashboard';
 import { ShareView } from './pages/ShareView';
+import { TermsOfService } from './pages/TermsOfService';
+import { PrivacyPolicy } from './pages/PrivacyPolicy';
+import { Credits } from './pages/Credits';
+import { LandingPage } from './pages/LandingPage';
 
 export default function App() {
   const { init, settings, loading } = useGardenStore();
@@ -67,8 +71,12 @@ export default function App() {
   return (
     <div className="app-shell">
       <Routes>
+        <Route path="/" element={<LandingPage />} />
         <Route path="/setup" element={<Setup />} />
         <Route path="/share/:data" element={<ShareView />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/credits" element={<Credits />} />
         <Route
           path="/*"
           element={

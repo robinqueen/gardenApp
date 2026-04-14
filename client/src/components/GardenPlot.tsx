@@ -103,6 +103,29 @@ function rectCenter(r: DisplayRect) {
   return { x: r.leftPct + r.widthPct / 2, y: r.topPct + r.heightPct / 2 };
 }
 
+/** Returns which side label the sun comes from, based on which edge is "top" */
+function sunHintLabel(topEdge: TopEdge): string {
+  // In the Northern Hemisphere the sun is in the southern sky.
+  // We label the hint by where south is in the current canvas orientation.
+  const map: Record<TopEdge, string> = {
+    north: 'south ↓',
+    south: 'south ↑',
+    east:  'south →',
+    west:  'south ←',
+  };
+  return map[topEdge];
+}
+
+/** Positions the sun hint near the south edge of the canvas */
+function sunHintStyle(topEdge: TopEdge): React.CSSProperties {
+  switch (topEdge) {
+    case 'north': return { bottom: 5, left: '50%', transform: 'translateX(-50%)' };
+    case 'south': return { top: 5,    left: '50%', transform: 'translateX(-50%)' };
+    case 'east':  return { right: 5,  top:  '50%', transform: 'translateY(-50%)' };
+    case 'west':  return { left: 5,   top:  '50%', transform: 'translateY(-50%)' };
+  }
+}
+
 // ─── Component ────────────────────────────────────────────────
 
 interface GardenPlotProps {
@@ -410,8 +433,14 @@ export function GardenPlot({ onSelectBed, onEditFeature }: GardenPlotProps) {
               <div className="plot-scale-label">5 ft</div>
             </div>
 
-            {/* Sun indicator */}
-            <div className="plot-sun-hint">☀️ south</div>
+            {/* Dynamic sun-side indicator */}
+            <div
+              className="plot-sun-hint"
+              style={sunHintStyle(topEdge)}
+              title="Sun direction (Northern Hemisphere)"
+            >
+              ☀️ {sunHintLabel(topEdge)}
+            </div>
 
             {/* ── Trellis arch SVG overlay ──────────────────── */}
             {trellisArcs.length > 0 && (

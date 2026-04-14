@@ -36,3 +36,13 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Secrets / certs
+*.pem
+*.key
+*.crt
+.npmrc
+
+# .NET API config with secrets
+api/appsettings.Development.json
+api/appsettings.Production.json

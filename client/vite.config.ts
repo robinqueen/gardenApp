@@ -8,9 +8,9 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'GardenApp',
-        short_name: 'Garden',
-        description: 'Personal garden planner and task tracker',
+        name: 'My Living Garden',
+        short_name: 'My Garden',
+        description: 'Plan your garden beds, schedule seed starting, track harvests, and watch your garden grow — all offline, all yours.',
         theme_color: '#3a7d44',
         background_color: '#f5f0e8',
         display: 'standalone',

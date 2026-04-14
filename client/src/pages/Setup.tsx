@@ -1,9 +1,17 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useGardenStore } from '../store/useGardenStore';
 import { getFrostDates, getFrostDateObjects, formatDate } from '../catalog/frostDates';
-import { NORTH_EDGE_OPTIONS } from '../utils/sunWarnings';
-import type { Bed, BedType, SunExposure, NorthEdge } from '../types';
+import { plotTopEdgeToNorthEdge } from '../utils/sunWarnings';
+
+const SPACE_TYPE_LABELS: Record<BedType, string> = {
+  raised:         'Raised Bed',
+  inground:       'In-Ground Area',
+  container:      'Container',
+  'planter-box':  'Planter Box',
+  bucket:         'Bucket / Pot',
+};
+import type { Bed, BedType, SunExposure } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 type Step = 'location' | 'frost' | 'beds';
@@ -14,7 +22,6 @@ interface BedDraft {
   lengthFt: string;
   type: BedType;
   sunExposure: SunExposure;
-  northEdge: NorthEdge;
 }
 
 const EMPTY_BED_DRAFT: BedDraft = {
@@ -23,7 +30,6 @@ const EMPTY_BED_DRAFT: BedDraft = {
   lengthFt: '8',
   type: 'raised',
   sunExposure: 'full-sun',
-  northEdge: 'top',
 };
 
 export function Setup() {
@@ -41,6 +47,9 @@ export function Setup() {
   const [beds, setBeds] = useState<Bed[]>([]);
   const [draft, setDraft] = useState<BedDraft>(EMPTY_BED_DRAFT);
   const [showBedForm, setShowBedForm] = useState(false);
+  const [plotTopEdge, setPlotTopEdge] = useState<'north' | 'east' | 'south' | 'west'>(
+    (settings.plotTopEdge as 'north' | 'east' | 'south' | 'west') ?? 'north'
+  );
 
   const stepIndex = (['location', 'frost', 'beds'] as Step[]).indexOf(step);
 
@@ -63,7 +72,7 @@ export function Setup() {
       lengthFt: Math.max(1, parseInt(draft.lengthFt) || 8),
       type: draft.type,
       sunExposure: draft.sunExposure,
-      northEdge: draft.northEdge,
+      northEdge: plotTopEdgeToNorthEdge(plotTopEdge),
       slots: [],
     };
     setBeds([...beds, bed]);
@@ -78,6 +87,7 @@ export function Setup() {
       zipcode,
       lastFrostDate: lastFrostOverride || null,
       firstFallFrostDate: firstFrostOverride || null,
+      plotTopEdge,
       setupComplete: true,
     });
     navigate('/planner');
@@ -85,9 +95,16 @@ export function Setup() {
 
   return (
     <div className="setup-page">
-      <div className="setup-logo">🌱</div>
-      <h1 className="setup-title">GardenApp</h1>
-      <p className="setup-subtitle">Let's get your garden set up</p>
+      <div className="setup-logo">🌿</div>
+      <h1 className="setup-title">My Living Garden</h1>
+      <p className="setup-subtitle">Plan beds · Schedule seeds · Track your harvest</p>
+
+      <div className="setup-features">
+        <span className="setup-feature-chip">🌿 Layout</span>
+        <span className="setup-feature-chip">🌱 Seed starting</span>
+        <span className="setup-feature-chip">📅 Planting calendar</span>
+        <span className="setup-feature-chip">🌦️ Weather</span>
+      </div>
 
       <div className="step-indicator">
         {(['location', 'frost', 'beds'] as Step[]).map((s, i) => (
@@ -171,8 +188,36 @@ export function Setup() {
       {/* ── Step 3: Garden Beds ────────────────────────────── */}
       {step === 'beds' && (
         <div className="setup-card">
-          <h2>Your Garden Beds</h2>
-          <p>Add each raised bed, in-ground plot, or container. Sun direction helps detect shading issues.</p>
+          <h2>Your Garden</h2>
+          <p>Add your growing spaces — raised beds, containers, in-ground areas, and more.</p>
+
+          {/* Garden orientation picker */}
+          <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+            <label className="form-label">🧭 Garden orientation</label>
+            <p className="form-hint" style={{ marginBottom: '0.5rem' }}>
+              Which direction is north in your garden? This sets sun direction for all spaces automatically.
+            </p>
+            <div className="compass-picker">
+              {(['north', 'east', 'south', 'west'] as const).map((dir) => (
+                <button
+                  key={dir}
+                  type="button"
+                  className={`compass-btn${plotTopEdge === dir ? ' active' : ''}`}
+                  onClick={() => setPlotTopEdge(dir)}
+                >
+                  <span className="compass-btn-arrow">
+                    {dir === 'north' ? '↑N' : dir === 'east' ? '→E' : dir === 'south' ? '↓S' : '←W'}
+                  </span>
+                </button>
+              ))}
+            </div>
+            <p className="form-hint" style={{ marginTop: '0.5rem', color: 'var(--color-primary)' }}>
+              {plotTopEdge === 'north' && '☀️ Sun comes from the south (bottom of your map)'}
+              {plotTopEdge === 'south' && '☀️ Sun comes from the south (top of your map)'}
+              {plotTopEdge === 'east'  && '☀️ Sun comes from the south (right of your map)'}
+              {plotTopEdge === 'west'  && '☀️ Sun comes from the south (left of your map)'}
+            </p>
+          </div>
 
           {beds.length > 0 && (
             <div className="bed-list">
@@ -194,7 +239,7 @@ export function Setup() {
           {showBedForm ? (
             <>
               <div className="form-group">
-                <label className="form-label">Bed Name</label>
+                <label className="form-label">Name</label>
                 <input className="form-input" placeholder="e.g. North Raised Bed" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} autoFocus />
               </div>
               <div className="form-row">
@@ -223,33 +268,31 @@ export function Setup() {
                   <option value="shade">🌥️ Shade (less than 3 hours/day)</option>
                 </select>
               </div>
-              <div className="form-group">
-                <label className="form-label">🧭 Which edge faces north?</label>
-                <select className="form-select" value={draft.northEdge} onChange={(e) => setDraft({ ...draft, northEdge: e.target.value as NorthEdge })}>
-                  {NORTH_EDGE_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-              </div>
               <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem' }}>
                 <button className="btn btn-ghost" onClick={() => setShowBedForm(false)}>Cancel</button>
-                <button className="btn btn-primary btn-full" onClick={handleAddBed} disabled={!draft.name.trim()}>Add Bed</button>
+                <button className="btn btn-primary btn-full" onClick={handleAddBed} disabled={!draft.name.trim()}>{`Add ${SPACE_TYPE_LABELS[draft.type]}`}</button>
               </div>
             </>
           ) : (
             <button className="btn btn-secondary btn-full" style={{ marginBottom: '1rem' }} onClick={() => setShowBedForm(true)}>
-              + Add a Bed
+              + Add a Bed or Container
             </button>
           )}
 
           <div style={{ display: 'flex', gap: '0.75rem' }}>
             <button className="btn btn-ghost" onClick={() => setStep('frost')}>← Back</button>
             <button className="btn btn-primary btn-full" onClick={handleFinish}>
-              {beds.length === 0 ? 'Skip & Finish →' : `Finish Setup (${beds.length} bed${beds.length !== 1 ? 's' : ''}) →`}
+              {beds.length === 0 ? 'Skip & Finish →' : `Finish Setup (${beds.length} space${beds.length !== 1 ? 's' : ''}) →`}
             </button>
           </div>
         </div>
       )}
+
+      <div className="setup-legal">
+        By using My Living Garden you agree to our{' '}
+        <Link to="/terms">Terms of Service</Link> and{' '}
+        <Link to="/privacy">Privacy Policy</Link>.
+      </div>
     </div>
   );
 }

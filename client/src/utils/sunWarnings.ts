@@ -72,12 +72,15 @@ function shadowRiskRowOrCol(
     // North is right — sun comes from the left.
     // Tall plants on the RIGHT (last col) cast shade west → bad.
     case 'right':  return cellX === maxCol;
+    default:       return false;
   }
 }
 
 /**
- * Returns a shadow warning string if a tall/vine plant is placed where it
- * would cast shade over the rest of the bed.
+ * Returns a shadow warning for any tall or vine plant — they can cast significant
+ * shade on shorter neighbours regardless of bed position.
+ * Plants on the north edge get a stronger warning since they block the sun path
+ * across the entire bed.
  */
 export function shadowWarning(
   seed: CatalogSeed,
@@ -85,10 +88,11 @@ export function shadowWarning(
   slot: PlantSlot
 ): string | null {
   if (seed.heightCategory !== 'tall' && seed.heightCategory !== 'vine') return null;
+  const kind = seed.heightCategory === 'vine' ? 'climbing vine' : 'tall plant';
   if (shadowRiskRowOrCol(bed, slot)) {
-    return `⚠️ ${seed.name} is ${seed.heightCategory} and placed on the north side — it may shade the rest of the bed.`;
+    return `⚠️ ${seed.name} is a ${kind} on the north edge — will shade the bed southward.`;
   }
-  return null;
+  return `⚠️ ${seed.name} is a ${kind} — may cast shade on shorter plants nearby.`;
 }
 
 /**
@@ -108,6 +112,26 @@ export function sunDirectionLabel(northEdge: NorthEdge): string {
 /** Arrow emoji indicating the sun direction for compact display. */
 export function sunArrow(northEdge: NorthEdge): string {
   return { top: '↓', bottom: '↑', left: '→', right: '←' }[northEdge];
+}
+
+/**
+ * Derives which edge of any bed faces north, given the plot's top-edge orientation.
+ * Since all beds share the same physical garden space, their north edge is always
+ * determined by the global plot orientation — not set per bed.
+ *
+ * plotTopEdge 'north' → canvas top = N  → bed top edge faces north   → 'top'
+ * plotTopEdge 'south' → canvas top = S  → bed bottom edge faces north → 'bottom'
+ * plotTopEdge 'east'  → canvas top = E  → bed left edge faces north   → 'left'
+ * plotTopEdge 'west'  → canvas top = W  → bed right edge faces north  → 'right'
+ */
+export function plotTopEdgeToNorthEdge(topEdge: string | undefined): NorthEdge {
+  const map: Record<string, NorthEdge> = {
+    north: 'top',
+    south: 'bottom',
+    east:  'left',
+    west:  'right',
+  };
+  return map[topEdge ?? 'north'] ?? 'top';
 }
 
 export const NORTH_EDGE_OPTIONS: { value: NorthEdge; label: string }[] = [

@@ -177,7 +177,7 @@ export interface Bed {
    * Knowing this lets us warn when tall plants are placed on the sunny (south) side
    * where they would shade shorter plants.
    */
-  northEdge: NorthEdge;
+  northEdge?: NorthEdge;
   slots: PlantSlot[];
   /** Position on the garden plot overview canvas (feet from top-left corner). */
   plotX?: number;
@@ -346,7 +346,7 @@ export interface ActivityLog {
 
 // ─── Export Bundle ────────────────────────────────────────────
 
-/** The shape of a full data export file (gardenapp-export.json). */
+/** The shape of a full data export file (mylivinggarden-YYYY-backup.json). */
 export interface ExportBundle {
   version: 2;
   exportedAt: string;

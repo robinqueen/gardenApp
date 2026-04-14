@@ -6,13 +6,17 @@ interface GapSuggestionsPanelProps {
   gaps: GapSuggestion[];
   /** 'calendar' = full expanded view; 'dashboard' = compact with link */
   variant?: 'calendar' | 'dashboard';
+  /** Makes the whole panel header a collapse toggle */
+  collapsible?: boolean;
+  open?: boolean;
+  onToggle?: () => void;
 }
 
 function fmtDate(iso: string): string {
   return new Date(iso + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-export function GapSuggestionsPanel({ gaps, variant = 'calendar' }: GapSuggestionsPanelProps) {
+export function GapSuggestionsPanel({ gaps, variant = 'calendar', collapsible, open = true, onToggle }: GapSuggestionsPanelProps) {
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
@@ -28,15 +32,22 @@ export function GapSuggestionsPanel({ gaps, variant = 'calendar' }: GapSuggestio
   }
 
   const displayGaps = variant === 'dashboard' ? gaps.slice(0, 3) : gaps;
+  const panelOpen = collapsible ? open : true;
 
   return (
     <div className="gap-panel">
-      <div className="gap-panel-header">
+      <div
+        className={`gap-panel-header${collapsible ? ' gap-panel-header--collapsible' : ''}`}
+        onClick={collapsible ? onToggle : undefined}
+      >
         <span className="gap-panel-title">🔄 Succession gaps</span>
-        <span className="gap-panel-count">{gaps.length} bed{gaps.length !== 1 ? 's' : ''}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span className="gap-panel-count">{gaps.length} bed{gaps.length !== 1 ? 's' : ''}</span>
+          {collapsible && <span className="dash-chevron">{panelOpen ? '▾' : '▸'}</span>}
+        </div>
       </div>
 
-      {displayGaps.map((gap) => {
+      {panelOpen && displayGaps.map((gap) => {
         const isOpen = variant === 'calendar' || expanded.has(gap.bedId);
 
         return (
@@ -54,7 +65,7 @@ export function GapSuggestionsPanel({ gaps, variant = 'calendar' }: GapSuggestio
                 </div>
               </div>
               {variant === 'dashboard' && (
-                <span style={{ color: 'var(--color-text-muted)' }}>{isOpen ? '▲' : '▼'}</span>
+                <span style={{ color: 'var(--color-text-muted)' }}>{isOpen ? '▾' : '▸'}</span>
               )}
             </div>
 
@@ -81,7 +92,7 @@ export function GapSuggestionsPanel({ gaps, variant = 'calendar' }: GapSuggestio
         );
       })}
 
-      {variant === 'dashboard' && gaps.length > 3 && (
+      {panelOpen && variant === 'dashboard' && gaps.length > 3 && (
         <button
           className="btn btn-ghost btn-sm"
           style={{ width: '100%', marginTop: '0.35rem' }}

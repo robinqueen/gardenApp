@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import type { Bed, PlantSlot } from '../types';
 import { SEED_CATALOG } from '../catalog/seeds';
 import { occupiedCells, isOriginCell, densityLabel, buildSlot } from '../utils/spacingCalc';
-import { shadowWarning, sunArrow, SUN_ICONS } from '../utils/sunWarnings';
+import { shadowWarning, sunArrow, SUN_ICONS, plotTopEdgeToNorthEdge } from '../utils/sunWarnings';
 import { PlantPicker } from './PlantPicker';
 import { useGardenStore } from '../store/useGardenStore';
 import { getPlantingWindow, resolveFrostDates } from '../utils/plantingWindow';
@@ -15,15 +15,19 @@ interface BedGridProps {
 }
 
 export function BedGrid({ bed, readonly = false }: BedGridProps) {
-  const placeSlot = useGardenStore((s) => s.placeSlot);
+  const placeSlot  = useGardenStore((s) => s.placeSlot);
   const removeSlot = useGardenStore((s) => s.removeSlot);
+  const updateSlot = useGardenStore((s) => s.updateSlot);
 
-  const [pickerCell, setPickerCell] = useState<{ x: number; y: number } | null>(null);
+  const [pickerCell, setPickerCell]   = useState<{ x: number; y: number } | null>(null);
   const [hoverSlotId, setHoverSlotId] = useState<string | null>(null);
+  const [editingSlot, setEditingSlot] = useState<PlantSlot | null>(null);
+
+  const { settings } = useGardenStore();
+  const northEdge = plotTopEdgeToNorthEdge(settings.plotTopEdge);
 
   // ── Defensive defaults for beds saved before these fields existed ─────
   const sunExposure = bed.sunExposure ?? 'full-sun';
-  const northEdge   = bed.northEdge   ?? 'top';
 
   // ── Cell map: "x,y" → owning PlantSlot ────────────────────
   const cellMap = useMemo(() => {
@@ -53,6 +57,16 @@ export function BedGrid({ bed, readonly = false }: BedGridProps) {
     return { companions, antagonists };
   }, [hoverSlotId, bed.slots]);
 
+  // ── Spreader slots (spacingInches ≥ 24 — needs more real-world space) ───
+  const spreaderSlots = useMemo(() => {
+    const ids = new Set<string>();
+    for (const slot of bed.slots) {
+      const seed = SEED_CATALOG.find((s) => s.id === slot.plantId);
+      if (seed && seed.spacingInches >= 24) ids.add(slot.id);
+    }
+    return ids;
+  }, [bed.slots]);
+
   // ── Shadow warnings per slot ───────────────────────────────
   const slotWarnings = useMemo(() => {
     const warnings = new Map<string, string>();
@@ -67,7 +81,6 @@ export function BedGrid({ bed, readonly = false }: BedGridProps) {
     return warnings;
   }, [bed, sunExposure, northEdge]);
 
-  const { settings } = useGardenStore();
   const today = useMemo(() => { const d = new Date(); d.setHours(0,0,0,0); return d; }, []);
   const frosts = useMemo(() =>
     resolveFrostDates(
@@ -87,15 +100,30 @@ export function BedGrid({ bed, readonly = false }: BedGridProps) {
     if (readonly) return;
     const slot = cellMap.get(`${x},${y}`);
     if (slot) {
-      void removeSlot(bed.id, slot.id);
+      setEditingSlot(slot);          // open PlantPicker in view/edit mode
     } else {
-      setPickerCell({ x, y });
+      setEditingSlot(null);
+      setPickerCell({ x, y });       // open PlantPicker in add mode
     }
   }
 
   function handlePlace(slotData: ReturnType<typeof buildSlot>) {
     void placeSlot(bed.id, slotData);
     setPickerCell(null);
+  }
+
+  function handleUpdate(slotData: ReturnType<typeof buildSlot>) {
+    if (!editingSlot) return;
+    // updateSlot takes a full PlantSlot — preserve the original ID
+    const updated: PlantSlot = { id: editingSlot.id, ...slotData };
+    void updateSlot(bed.id, updated);
+    setEditingSlot(null);
+  }
+
+  function handleRemoveEditing() {
+    if (!editingSlot) return;
+    void removeSlot(bed.id, editingSlot.id);
+    setEditingSlot(null);
   }
 
   // ── Compass labels — one letter per edge, no duplicates ───
@@ -152,8 +180,9 @@ export function BedGrid({ bed, readonly = false }: BedGridProps) {
                   const slot = cellMap.get(key);
                   const seed = slot ? SEED_CATALOG.find((s) => s.id === slot.plantId) : null;
                   const origin = slot ? isOriginCell(slot, col, row) : false;
-                  const hasWarning = slot ? slotWarnings.has(slot.id) : false;
-                  const isHovered = slot ? slot.id === hoverSlotId : false;
+                  const hasWarning  = slot ? slotWarnings.has(slot.id)   : false;
+                  const isSpreader  = slot ? spreaderSlots.has(slot.id)  : false;
+                  const isHovered   = slot ? slot.id === hoverSlotId     : false;
 
                   const isCompanion   = slot ? companionMap.companions.has(slot.id)   : false;
                   const isAntagonist  = slot ? companionMap.antagonists.has(slot.id)  : false;
@@ -162,9 +191,10 @@ export function BedGrid({ bed, readonly = false }: BedGridProps) {
                   if (slot) {
                     if (slot.weekOffset > 0) cellClass += ' succession';
                     else cellClass += ' occupied';
-                    if (hasWarning) cellClass += ' has-warning';
-                    if (isHovered) cellClass += ' hovered';
-                    if (!origin) cellClass += ' claimed';
+                    if (isSpreader)  cellClass += ' is-spreader';
+                    if (hasWarning)  cellClass += ' has-warning';  // overrides spreader visually
+                    if (isHovered)   cellClass += ' hovered';
+                    if (!origin)     cellClass += ' claimed';
                     if (isCompanion)  cellClass += ' companion-glow';
                     if (isAntagonist) cellClass += ' antagonist-glow';
                   }
@@ -253,12 +283,17 @@ export function BedGrid({ bed, readonly = false }: BedGridProps) {
           <div className="legend-swatch" style={{ background: '#fdecea', borderColor: '#c0392b' }} />
           ⚠️ Shadow risk
         </div>
+        <div className="legend-item">
+          <div className="legend-swatch" style={{ background: '#fde68a', borderColor: '#d97706' }} />
+          📐 Spreader
+        </div>
       </div>
 
       {!readonly && (
-        <p className="planner-info">Tap empty cell to plant · Tap planted cell to remove</p>
+        <p className="planner-info">Tap empty cell to plant · Tap planted cell for details</p>
       )}
 
+      {/* ── PlantPicker: add mode ──────────────────────────── */}
       {pickerCell && (
         <PlantPicker
           cellX={pickerCell.x}
@@ -266,6 +301,19 @@ export function BedGrid({ bed, readonly = false }: BedGridProps) {
           bed={bed}
           onPlace={handlePlace}
           onCancel={() => setPickerCell(null)}
+        />
+      )}
+
+      {/* ── PlantPicker: edit/view mode (existing plant) ──── */}
+      {editingSlot && (
+        <PlantPicker
+          cellX={editingSlot.cellX}
+          cellY={editingSlot.cellY}
+          bed={bed}
+          onPlace={handleUpdate}
+          onCancel={() => setEditingSlot(null)}
+          editingSlot={editingSlot}
+          onRemove={handleRemoveEditing}
         />
       )}
     </>

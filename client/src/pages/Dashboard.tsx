@@ -101,6 +101,8 @@ export function Dashboard() {
   const { tasks, garden, activityLogs, logActivity, completeTask, settings } = useGardenStore();
   const [loggedType, setLoggedType] = useState<ActivityType | null>(null);
   const [quickLogBedId, setQuickLogBedId] = useState('');
+  const [overdueOpen, setOverdueOpen] = useState(true);
+  const [gapsOpen, setGapsOpen] = useState(true);
 
   const t = today();
   const in7  = addDays(t, 7);
@@ -204,6 +206,14 @@ export function Dashboard() {
   const loggedToday = activityLogs.filter((l) => l.date === todayIso);
 
   // ── Quick log handler ─────────────────────────────────────────
+  async function handleCompleteAllOverdue() {
+    const confirmed = window.confirm(
+      `Mark all ${overdue.length} overdue task${overdue.length !== 1 ? 's' : ''} as complete?\n\nThis cannot be undone.`
+    );
+    if (!confirmed) return;
+    await Promise.all(overdue.map((t) => completeTask(t.id, true)));
+  }
+
   async function handleQuickLog(type: ActivityType) {
     await logActivity({
       type,
@@ -246,10 +256,31 @@ export function Dashboard() {
       {/* ── Overdue ─────────────────────────────────────────── */}
       {overdue.length > 0 && (
         <div className="dash-section">
-          <div className="dash-section-label overdue">⚠️ Overdue ({overdue.length})</div>
-          {overdue.map((task) => (
-            <TaskRow key={task.id} task={task} onComplete={() => void completeTask(task.id, true)} />
-          ))}
+          <div className="dash-collapsible-header" onClick={() => setOverdueOpen(o => !o)}>
+            <span className="dash-section-label overdue" style={{ marginBottom: 0 }}>
+              ⚠️ Overdue ({overdue.length})
+            </span>
+              <span className="dash-chevron">{overdueOpen ? '▾' : '▸'}</span>
+          </div>
+          {overdueOpen && (
+            <>
+              <button
+                className="btn dash-complete-all-btn"
+                onClick={() => void handleCompleteAllOverdue()}
+              >
+                ✓ Mark all {overdue.length} overdue as complete
+              </button>
+              {overdue.map((task) => (
+                <TaskRow key={task.id} task={task} onComplete={() => void completeTask(task.id, true)} />
+              ))}
+              <button
+                className="btn dash-complete-all-btn"
+                onClick={() => void handleCompleteAllOverdue()}
+              >
+                ✓ Mark all {overdue.length} overdue as complete
+              </button>
+            </>
+          )}
         </div>
       )}
 
@@ -333,7 +364,13 @@ export function Dashboard() {
 
       {gaps.length > 0 && (
         <div className="dash-section">
-          <GapSuggestionsPanel gaps={gaps} variant="dashboard" />
+          <GapSuggestionsPanel
+            gaps={gaps}
+            variant="dashboard"
+            collapsible
+            open={gapsOpen}
+            onToggle={() => setGapsOpen(o => !o)}
+          />
         </div>
       )}
 

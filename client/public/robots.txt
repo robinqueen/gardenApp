@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /planner
+Disallow: /calendar
+Disallow: /seeds
+Disallow: /log
+Disallow: /settings
+Disallow: /seasons
+
+Sitemap: https://mylivinggarden.com/sitemap.xml

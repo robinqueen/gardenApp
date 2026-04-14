@@ -25,7 +25,7 @@ class GardenDb extends Dexie {
   customSeeds!: Table<CatalogSeed, string>;
 
   constructor() {
-    super('GardenApp');
+    super('MyLivingGarden');
     this.version(1).stores({
       settings: 'id',
       gardens: 'id',

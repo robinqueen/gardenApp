@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useGardenStore } from '../store/useGardenStore';
 import { getFrostDates, getFrostDateObjects, formatDate } from '../catalog/frostDates';
 import { plotTopEdgeToNorthEdge } from '../utils/sunWarnings';
+import { trackSetupCompleted } from '../utils/analytics';
 
 const SPACE_TYPE_LABELS: Record<BedType, string> = {
   raised:         'Raised Bed',
@@ -90,6 +91,7 @@ export function Setup() {
       plotTopEdge,
       setupComplete: true,
     });
+    trackSetupCompleted(zipcode, beds.length, plotTopEdge);
     navigate('/planner');
   }
 

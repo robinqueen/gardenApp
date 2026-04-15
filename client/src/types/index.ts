@@ -232,6 +232,12 @@ export interface CatalogSeed {
   family: string;
   /** Emoji icon shown in the bed grid cell. */
   icon: string;
+  /**
+   * True when the emoji is an approximation — no accurate emoji exists for
+   * this plant. The UI renders a small `~` badge so users know the icon is
+   * a stand-in rather than a literal representation.
+   */
+  iconIsApprox?: boolean;
   /** Weeks before last frost to start seeds indoors. */
   indoorStartWeeks: number;
   /** Weeks relative to last frost for direct sow. Negative = before frost. */

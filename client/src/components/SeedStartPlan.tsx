@@ -8,6 +8,7 @@ import { SEED_CATALOG } from '../catalog/seeds';
 import { getFrostDateObjects } from '../catalog/frostDates';
 import { buildSeedStartPlan } from '../utils/seedStartCalc';
 import type { SeedStartBatch } from '../utils/seedStartCalc';
+import { PlantIcon } from './PlantIcon';
 
 // ─── Resolve the best available frost date ────────────────────
 // Priority: manually-entered date > ZIP-derived > null
@@ -178,7 +179,7 @@ function BatchCard({ batch, seedsPerCell, defaultOpen }:
             <tbody>
               {batch.entries.map(entry => (
                 <tr key={entry.seedId}>
-                  <td className="ssp-col-icon">{entry.icon}</td>
+                  <td className="ssp-col-icon"><PlantIcon seed={entry} /></td>
                   <td>
                     <div className="ssp-entry-name">{entry.name}</div>
                     <div className="ssp-entry-category">{entry.category}</div>
@@ -359,7 +360,7 @@ export function SeedStartPlan() {
           <div className="ssp-aside-list">
             {plan.alreadyStarted.map(item => (
               <div key={item.seedId} className="ssp-aside-item">
-                <span>{item.icon}</span>
+                <PlantIcon seed={item} />
                 <span className="ssp-aside-name">{item.name}</span>
                 <span className="ssp-aside-count">×{item.count}</span>
               </div>
@@ -375,7 +376,7 @@ export function SeedStartPlan() {
           <div className="ssp-aside-list">
             {plan.directSowOnly.map(item => (
               <div key={item.seedId} className="ssp-aside-item">
-                <span>{item.icon}</span>
+                <PlantIcon seed={item} />
                 <span className="ssp-aside-name">{item.name}</span>
                 <span className="ssp-aside-count">×{item.count}</span>
               </div>

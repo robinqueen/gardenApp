@@ -71,6 +71,7 @@ export interface SeedStartEntry {
   seedId: string;
   name: string;
   icon: string;
+  iconIsApprox?: boolean;
   category: string;
   /** Slots planned in beds — the number you want to transplant. */
   desiredPlants: number;
@@ -105,8 +106,8 @@ export interface SeedStartPlan {
   totalVarieties: number;
   totalCells: number;
   totalSeeds: number;
-  directSowOnly:  { seedId: string; name: string; icon: string; count: number }[];
-  alreadyStarted: { seedId: string; name: string; icon: string; count: number }[];
+  directSowOnly:  { seedId: string; name: string; icon: string; iconIsApprox?: boolean; count: number }[];
+  alreadyStarted: { seedId: string; name: string; icon: string; iconIsApprox?: boolean; count: number }[];
 }
 
 // ─── Calendar helpers ─────────────────────────────────────────
@@ -184,6 +185,7 @@ export function buildSeedStartPlan(
       seedId,
       name:             seed.name,
       icon:             seed.icon,
+      iconIsApprox:     seed.iconIsApprox,
       category:         seed.category,
       desiredPlants:    desired,
       cellsNeeded:      cells,
@@ -222,11 +224,11 @@ export function buildSeedStartPlan(
   }
 
   const directSowOnly = [...tallyDirect.entries()]
-    .map(([id, c]) => ({ seedId: id, name: seedMap.get(id)?.name ?? id, icon: seedMap.get(id)?.icon ?? '🌱', count: c }))
+    .map(([id, c]) => ({ seedId: id, name: seedMap.get(id)?.name ?? id, icon: seedMap.get(id)?.icon ?? '🌱', iconIsApprox: seedMap.get(id)?.iconIsApprox, count: c }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
   const alreadyStarted = [...tallyStarted.entries()]
-    .map(([id, c]) => ({ seedId: id, name: seedMap.get(id)?.name ?? id, icon: seedMap.get(id)?.icon ?? '🌿', count: c }))
+    .map(([id, c]) => ({ seedId: id, name: seedMap.get(id)?.name ?? id, icon: seedMap.get(id)?.icon ?? '🌿', iconIsApprox: seedMap.get(id)?.iconIsApprox, count: c }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
   const totalCells     = batches.reduce((s, b) => s + b.totalCells, 0);

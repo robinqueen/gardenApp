@@ -8,6 +8,7 @@ import { useGardenStore } from '../store/useGardenStore';
 import { getPlantingWindow, resolveFrostDates } from '../utils/plantingWindow';
 import { getFrostDateObjects } from '../catalog/frostDates';
 import { PlantingWindowBadge } from './PlantingWindowBadge';
+import { PlantIcon } from './PlantIcon';
 
 interface BedGridProps {
   bed: Bed;
@@ -211,23 +212,29 @@ export function BedGrid({ bed, readonly = false }: BedGridProps) {
                           ? [
                               seed.name,
                               slot!.weekOffset > 0 ? `+${slot!.weekOffset}w succession` : '',
-                              hasWarning ? '⚠️ shadow risk' : '',
+                              hasWarning ? '💡 shade note' : '',
+                              isSpreader ? '📐 spreader' : '',
                               frosts ? getPlantingWindow(seed, frosts.lastFrost, frosts.firstFrost, today).label : '',
-                              !readonly ? '— tap to remove' : '',
+                              !readonly ? '— tap to edit' : '',
                             ].filter(Boolean).join(' · ')
                           : readonly ? '' : `(${col + 1},${row + 1}) — tap to plant`
                       }
                     >
                       {seed && origin && (
                         <>
-                          <span className="cell-icon">{seed.icon}</span>
+                          <span className="cell-icon"><PlantIcon seed={seed} /></span>
                           {densityLabel(slot!) && (
                             <span className="cell-count">{densityLabel(slot!)}</span>
                           )}
                           {slot!.weekOffset > 0 && (
                             <span className="cell-offset">+{slot!.weekOffset}w</span>
                           )}
-                          {hasWarning && <span className="cell-warn">⚠️</span>}
+                          {hasWarning && (
+                            <span className="cell-warn cell-warn-shadow">
+                              {seed.heightCategory === 'vine' ? '🌿' : '▲'}
+                            </span>
+                          )}
+                          {isSpreader && <span className="cell-warn cell-warn-spreader">📐</span>}
                           {slot!.stage && slot!.stage !== 'planned' && slot!.stage !== 'direct-sow' && (
                             <span className="cell-stage" title={slot!.stage.replace(/-/g, ' ')}>
                               {slot!.stage === 'seeds-started'        ? '🌱'
@@ -260,14 +267,36 @@ export function BedGrid({ bed, readonly = false }: BedGridProps) {
         <div className="compass-bottom">{compassLabels.bottom}</div>
       </div>
 
-      {/* Shadow warnings */}
-      {slotWarnings.size > 0 && (
-        <div className="shadow-warnings">
-          {Array.from(slotWarnings.values()).map((w, i) => (
-            <div key={i} className="shadow-warn-item">{w}</div>
-          ))}
-        </div>
-      )}
+      {/* Collapsible planting notes */}
+      {(slotWarnings.size > 0 || spreaderSlots.size > 0) && (() => {
+        const totalNotes = slotWarnings.size + spreaderSlots.size;
+        return (
+          <details className="plant-notes-details">
+            <summary className="plant-notes-summary">
+              {totalNotes} planting note{totalNotes !== 1 ? 's' : ''}
+            </summary>
+            <div className="shadow-warnings">
+              {Array.from(slotWarnings.entries()).map(([slotId, w], i) => {
+                const isBoth = spreaderSlots.has(slotId);
+                return (
+                  <div key={i} className={`shadow-warn-item${isBoth ? ' shadow-warn-combined' : ''}`}>{w}</div>
+                );
+              })}
+              {bed.slots
+                .filter(s => spreaderSlots.has(s.id))
+                .map((s, i) => {
+                  const seed = SEED_CATALOG.find(c => c.id === s.plantId);
+                  if (!seed) return null;
+                  return (
+                    <div key={`sp-${i}`} className="shadow-warn-item shadow-warn-spreader">
+                      📐 {seed.name} (~{Math.round(seed.spacingInches / 12)}×{Math.round(seed.rowSpacingInches / 12)} ft) — needs more room than one grid cell, plan for sprawl or trellis.
+                    </div>
+                  );
+                })}
+            </div>
+          </details>
+        );
+      })()}
 
       {/* Legend */}
       <div className="bed-legend">
@@ -280,12 +309,16 @@ export function BedGrid({ bed, readonly = false }: BedGridProps) {
           Succession
         </div>
         <div className="legend-item">
-          <div className="legend-swatch" style={{ background: '#fdecea', borderColor: '#c0392b' }} />
-          ⚠️ Shadow risk
+          <div className="legend-swatch" style={{ background: '#fecdd3', borderColor: '#f43f5e' }} />
+          💡 Shade note
         </div>
         <div className="legend-item">
           <div className="legend-swatch" style={{ background: '#fde68a', borderColor: '#d97706' }} />
           📐 Spreader
+        </div>
+        <div className="legend-item">
+          <div className="legend-swatch" style={{ background: '#99f6e4', borderColor: '#0d9488' }} />
+          💡📐 Both
         </div>
       </div>
 

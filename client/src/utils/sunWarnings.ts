@@ -90,9 +90,9 @@ export function shadowWarning(
   if (seed.heightCategory !== 'tall' && seed.heightCategory !== 'vine') return null;
   const kind = seed.heightCategory === 'vine' ? 'climbing vine' : 'tall plant';
   if (shadowRiskRowOrCol(bed, slot)) {
-    return `⚠️ ${seed.name} is a ${kind} on the north edge — will shade the bed southward.`;
+    return `💡 ${seed.name} is a ${kind} on the north edge — may shade plants further into the bed.`;
   }
-  return `⚠️ ${seed.name} is a ${kind} — may cast shade on shorter plants nearby.`;
+  return `💡 ${seed.name} is a ${kind} — keep in mind it may cast some shade on shorter neighbours.`;
 }
 
 /**

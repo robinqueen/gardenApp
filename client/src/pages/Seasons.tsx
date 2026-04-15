@@ -4,6 +4,7 @@ import { SEED_CATALOG } from '../catalog/seeds';
 import { BedGrid } from '../components/BedGrid';
 import type { GardenSeason, ActivityLog, ActivityType } from '../types';
 import { summarizeYieldByCrop } from '../utils/yieldSummary';
+import { trackSeasonViewed } from '../utils/analytics';
 
 const ACTIVITY_ICONS: Record<ActivityType, string> = {
   watered: '💧',
@@ -107,7 +108,7 @@ export function Seasons() {
             <SeasonCard
               key={season.id}
               season={season}
-              onView={() => { setSelectedSeason(season); setSeasonTab('layout'); }}
+              onView={() => { setSelectedSeason(season); setSeasonTab('layout'); trackSeasonViewed(String(season.year)); }}
               onImport={() => setImportConfirm(season)}
             />
           ))}

@@ -6,6 +6,8 @@ import { blockSizeLabel, buildSlot } from '../utils/spacingCalc';
 import { sunCompatibilityWarning, SUN_ICONS } from '../utils/sunWarnings';
 import { toIsoDate } from '../catalog/frostDates';
 import { useGardenStore } from '../store/useGardenStore';
+import { trackPlantAdded, trackPlantRemoved, trackSeedTrayPlantAdded } from '../utils/analytics';
+import { PlantIcon } from './PlantIcon';
 
 interface PlantPickerProps {
   cellX: number;
@@ -185,6 +187,11 @@ export function PlantPicker({ cellX, cellY, bed, onPlace, onCancel, editingSlot,
     if (!selected) return;
     const resolvedDate = stageMeta.needsDate ? stageDate : undefined;
     onPlace(buildSlot(selected, cellX, cellY, weekOffset, stage, resolvedDate));
+    if (stage === 'seeds-started') {
+      trackSeedTrayPlantAdded(selected.name, selected.category ?? 'Unknown', bed.id);
+    } else {
+      trackPlantAdded(selected.name, selected.category ?? 'Unknown', bed.id, stage);
+    }
   }
 
   function handleSelectSeed(seed: CatalogSeed) {
@@ -495,7 +502,13 @@ export function PlantPicker({ cellX, cellY, bed, onPlace, onCancel, editingSlot,
               ← Back
             </button>
             {isEditing && onRemove && (
-              <button className="btn btn-danger" onClick={onRemove}>
+              <button
+                className="btn btn-danger"
+                onClick={() => {
+                  if (selected) trackPlantRemoved(selected.name, bed.id);
+                  onRemove();
+                }}
+              >
                 Remove
               </button>
             )}
@@ -610,7 +623,7 @@ export function PlantPicker({ cellX, cellY, bed, onPlace, onCancel, editingSlot,
                         ].filter(Boolean).join(' ')}
                         onClick={() => handleSelectSeed(seed)}
                       >
-                        <div className="p-icon">{seed.icon}</div>
+                        <div className="p-icon"><PlantIcon seed={seed} /></div>
                         <div className="p-name">{seed.name}</div>
                         <div className="p-meta">{seed.daysToMaturity}d</div>
                         {status === 'good' && <div className="p-companion">💚</div>}

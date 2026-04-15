@@ -12,6 +12,7 @@ import {
 } from '../utils/notifications';
 import { getHouseholdId, setHouseholdId, generateNewHouseholdId } from '../utils/household';
 import { clearAdapterCache } from '../adapters';
+import { trackShareLinkCreated } from '../utils/analytics';
 
 const APP_VERSION = '1.0.0';
 
@@ -75,6 +76,7 @@ export function Settings() {
     if (!garden) return;
     const url = buildShareUrl(garden, settings);
     setShareUrl(url);
+    trackShareLinkCreated();
   }
 
   async function handleCopyShare() {

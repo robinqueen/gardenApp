@@ -5,6 +5,7 @@ import type { CatalogSeed, UserSeed } from '../types';
 import { getPlantingWindow, resolveFrostDates } from '../utils/plantingWindow';
 import { getFrostDateObjects } from '../catalog/frostDates';
 import { PlantingWindowBadge } from '../components/PlantingWindowBadge';
+import { PlantIcon } from '../components/PlantIcon';
 
 type Tab = 'catalog' | 'inventory';
 
@@ -87,7 +88,7 @@ export function Seeds() {
                     className={`seed-card${ownedIds.has(seed.id) ? ' owned' : ''}`}
                     onClick={() => setSelectedSeed(seed)}
                   >
-                    <div className="seed-icon">{seed.icon}</div>
+                    <div className="seed-icon"><PlantIcon seed={seed} /></div>
                     <div className="seed-name">{seed.name}</div>
                     <div className="seed-family">{seed.family}</div>
                     {frosts && (

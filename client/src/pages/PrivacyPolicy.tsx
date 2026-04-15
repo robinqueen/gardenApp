@@ -35,13 +35,17 @@ export function PrivacyPolicy() {
 
           <h2>2. Usage Analytics</h2>
           <p>
-            We use a third-party analytics service to understand how many people use the app
+            We use two third-party analytics tools to understand how many people use the app
             and which features are most useful. This helps us decide what to build next.
           </p>
+          <ul>
+            <li><strong>Google Analytics 4</strong> — tracks page views and in-app feature usage (e.g. adding plants, creating beds). IP addresses are anonymized before storage.</li>
+            <li><strong>Microsoft Clarity</strong> — generates heatmaps showing which areas of the app users interact with most. No personal information is collected.</li>
+          </ul>
           <p>
             The analytics we collect are <strong>anonymous and aggregate</strong> — we can
             see that someone visited a page, not who they are. No personal information is
-            linked to these records. IP addresses are anonymized before storage.
+            linked to these records.
           </p>
           <p>
             If you prefer not to be counted, any standard ad or tracker blocker will prevent

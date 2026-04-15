@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { GapSuggestion } from '../types';
+import { trackGapSuggestionClicked } from '../utils/analytics';
+import { PlantIcon } from './PlantIcon';
 
 interface GapSuggestionsPanelProps {
   gaps: GapSuggestion[];
@@ -74,8 +76,13 @@ export function GapSuggestionsPanel({ gaps, variant = 'calendar', collapsible, o
                 <div className="gap-suggestions-label">Could fit:</div>
                 <div className="gap-chips">
                   {gap.suggestedCrops.map(({ seed, method, harvestBy }) => (
-                    <div key={seed.id} className="gap-chip">
-                      <span className="gap-chip-icon">{seed.icon}</span>
+                    <div
+                      key={seed.id}
+                      className="gap-chip"
+                      onClick={() => trackGapSuggestionClicked(seed.name, gap.bedName, method)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <span className="gap-chip-icon"><PlantIcon seed={seed} /></span>
                       <div className="gap-chip-body">
                         <div className="gap-chip-name">{seed.name}</div>
                         <div className="gap-chip-meta">

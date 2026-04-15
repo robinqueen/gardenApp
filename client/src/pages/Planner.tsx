@@ -9,6 +9,7 @@ import { SeedStartPlan } from '../components/SeedStartPlan';
 import { SEED_CATALOG } from '../catalog/seeds';
 import { sunLabel, SUN_ICONS, plotTopEdgeToNorthEdge } from '../utils/sunWarnings';
 import type { Bed, BedType, SunExposure, TrellisType, PlotFeature, PlotFeatureType } from '../types';
+import { trackBedCreated, trackBedResized, trackSeedTrayOpened, track3DViewOpened } from '../utils/analytics';
 
 // ─── Type labels (dynamic form title + save button) ──────────
 
@@ -166,10 +167,12 @@ export function Planner() {
 
     if (editingBed) {
       await updateBed({ ...editingBed, ...data });
+      trackBedResized(data.type, data.widthFt, data.lengthFt);
     } else {
       const newBed: Bed = { id: uuidv4(), ...data, slots: [] };
       await addBed(newBed);
       setSelectedBedId(newBed.id);
+      trackBedCreated(data.type, data.widthFt, data.lengthFt, data.sunExposure);
     }
     setShowBedForm(false);
     setEditingBed(null);
@@ -296,10 +299,10 @@ export function Planner() {
         <button className={`view-toggle-btn${view === 'beds' ? ' active' : ''}`} onClick={() => setView('beds')}>
           🌿 Beds
         </button>
-        <button className={`view-toggle-btn${view === 'starts' ? ' active' : ''}`} onClick={() => setView('starts')}>
+        <button className={`view-toggle-btn${view === 'starts' ? ' active' : ''}`} onClick={() => { setView('starts'); trackSeedTrayOpened(); }}>
           🌱 Starts
         </button>
-        <button className={`view-toggle-btn${view === '3d' ? ' active' : ''}`} onClick={() => setView('3d')}>
+        <button className={`view-toggle-btn${view === '3d' ? ' active' : ''}`} onClick={() => { setView('3d'); track3DViewOpened(); }}>
           🌳 3D
         </button>
       </div>

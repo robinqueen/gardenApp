@@ -128,7 +128,8 @@ export function TermsOfService() {
           <ul>
             <li><strong>Open-Meteo</strong> — weather forecasts (open-meteo.com). No personal data sent, only coordinates derived from your zip code.</li>
             <li><strong>OpenStreetMap Nominatim</strong> — geocoding zip codes to coordinates. No personal data sent beyond the zip code.</li>
-            <li><strong>Google Analytics 4</strong> — anonymized page-view analytics so we can understand how many people use the app. See our Privacy Policy for details.</li>
+            <li><strong>Google Analytics 4</strong> — anonymized page-view and feature-usage analytics. See our Privacy Policy for details.</li>
+            <li><strong>Microsoft Clarity</strong> — anonymous heatmaps showing how users interact with the app. No personal data collected. See our Privacy Policy for details.</li>
           </ul>
           <p>
             We are not responsible for those services' uptime, accuracy, data practices, or

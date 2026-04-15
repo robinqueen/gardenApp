@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { fetchWeather, getCachedWeather, setCachedWeather, type WeatherFeed } from '../utils/weather';
+import { trackWeatherChecked } from '../utils/analytics';
 
 export function useWeather(zipcode: string) {
   const [feed, setFeed]       = useState<WeatherFeed | null>(null);
@@ -27,6 +28,7 @@ export function useWeather(zipcode: string) {
         if (cancelled) return;
         setCachedWeather(zipcode, f);
         setFeed(f);
+        trackWeatherChecked(zipcode);
       })
       .catch((e: unknown) => {
         if (cancelled) return;

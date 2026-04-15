@@ -1047,17 +1047,24 @@ ul { list-style: none; }
   border-color: #f5d87a;
 }
 
-/* Spreader — plant needs significantly more real-world space than one grid cell */
+/* Spreader only — amber gold */
 .bed-cell.is-spreader.occupied,
 .bed-cell.is-spreader.succession {
   background: #fde68a !important;
   border-color: #d97706 !important;
 }
 
-/* Shadow / height warning — takes precedence over spreader */
+/* Shade note only — soft rose/coral */
 .bed-cell.has-warning.occupied {
-  background: #fdecea;
-  border-color: var(--color-danger);
+  background: #fecdd3 !important;
+  border-color: #f43f5e !important;
+}
+
+/* Both shade + spreader — deep teal so it reads as clearly distinct from all three */
+.bed-cell.has-warning.is-spreader.occupied,
+.bed-cell.has-warning.is-spreader.succession {
+  background: #99f6e4 !important;
+  border-color: #0d9488 !important;
 }
 
 /* Hover highlights the whole slot group */
@@ -1086,10 +1093,22 @@ ul { list-style: none; }
 
 .bed-cell .cell-warn {
   position: absolute;
-  top: 1px;
-  left: 2px;
   font-size: 0.6rem;
   line-height: 1;
+}
+
+/* Shadow note badge — top-left */
+.bed-cell .cell-warn-shadow {
+  top: 1px;
+  left: 2px;
+}
+
+/* Spreader badge — bottom-right */
+.bed-cell .cell-warn-spreader {
+  bottom: 1px;
+  right: 2px;
+  top: auto;
+  left: auto;
 }
 
 /* Faint icon on non-origin claimed cells */
@@ -1099,21 +1118,70 @@ ul { list-style: none; }
   line-height: 1;
 }
 
-/* ─── Shadow warnings ────────────────────────────────────────── */
-.shadow-warnings {
+/* ─── Collapsible planting notes ─────────────────────────────── */
+.plant-notes-details {
   margin-top: 0.5rem;
+}
+
+.plant-notes-summary {
+  cursor: pointer;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fbbf24;
+  padding: 4px 10px;
+  border-radius: 999px;
+  list-style: none;
+}
+.plant-notes-summary::-webkit-details-marker { display: none; }
+.plant-notes-summary::before {
+  content: '▶';
+  font-size: 0.55rem;
+  transition: transform 0.15s;
+}
+.plant-notes-details[open] .plant-notes-summary::before {
+  transform: rotate(90deg);
+}
+.plant-notes-summary:hover {
+  background: #fde68a;
+  border-color: #d97706;
+  color: #78350f;
+}
+
+.shadow-warnings {
+  margin-top: 0.35rem;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
+/* Shade note items — rose tint */
 .shadow-warn-item {
-  background: #fdecea;
-  border: 1px solid #f5c6cb;
   border-radius: var(--radius-sm);
-  padding: 0.4rem 0.65rem;
-  font-size: 0.78rem;
-  color: #7d1a1a;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.77rem;
+  background: #fff1f2;
+  border: 1px solid #fda4af;
+  color: #9f1239;
+}
+
+/* Spreader note — amber tint */
+.shadow-warn-spreader {
+  background: #fffbeb;
+  border-color: #fbbf24;
+  color: #92400e;
+}
+
+/* Combined note — teal tint */
+.shadow-warn-combined {
+  background: #f0fdfa;
+  border-color: #5eead4;
+  color: #0f5548;
 }
 
 /* ─── Plant Picker — sun mismatch ────────────────────────────── */
@@ -4292,3 +4360,23 @@ ul { list-style: none; }
   .landing-footer-links { justify-content: center; }
 }
 
+
+
+/* ─── PlantIcon approximate badge ───────────────────────────────────────── */
+.plant-icon-wrap {
+  position: relative;
+  display: inline-block;
+  line-height: 1;
+}
+.plant-icon-approx {
+  position: absolute;
+  bottom: -1px;
+  right: -5px;
+  font-size: 0.6rem;
+  line-height: 1;
+  font-weight: 700;
+  color: var(--color-text-muted, #999);
+  opacity: 0.75;
+  pointer-events: none;
+  user-select: none;
+}

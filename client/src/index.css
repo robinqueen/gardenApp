@@ -2383,6 +2383,25 @@ ul { list-style: none; }
   user-select: none;
 }
 
+
+/* ─── Account button frame ───────────────────────────────────── */
+.account-btn-frame {
+  position: fixed;
+  top: 0.75rem;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  max-width: 680px;
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 1rem;
+  z-index: 150;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+.account-btn-frame > * { pointer-events: auto; }
+
 /* ─── Desktop responsive ─────────────────────────────────────── */
 
 @media (min-width: 768px) {
@@ -2391,6 +2410,7 @@ ul { list-style: none; }
     padding: 1.5rem 2rem;
     padding-bottom: calc(var(--nav-height) + 1.5rem);
   }
+  .account-btn-frame { max-width: 860px; padding-right: 2rem; }
 
   .view3d-wrapper {
     height: 75vh;
@@ -2407,6 +2427,7 @@ ul { list-style: none; }
     padding: 2rem 2.5rem;
     padding-bottom: calc(var(--nav-height) + 2rem);
   }
+  .account-btn-frame { max-width: 1120px; padding-right: 2.5rem; }
 
   /* Two-column layout for card-heavy pages */
   .seed-grid {
@@ -2426,6 +2447,7 @@ ul { list-style: none; }
   .page {
     max-width: 1400px;
   }
+  .account-btn-frame { max-width: 1400px; }
 
   .seed-grid {
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));

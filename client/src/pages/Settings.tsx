@@ -11,14 +11,18 @@ import {
   notifyTodayTasks,
 } from '../utils/notifications';
 import { getHouseholdId, setHouseholdId, generateNewHouseholdId } from '../utils/household';
-import { clearAdapterCache } from '../adapters';
+import { clearAdapterCache, AUTH_ENABLED } from '../adapters';
+import { RemoteAdapter } from '../adapters/RemoteAdapter';
 import { trackShareLinkCreated } from '../utils/analytics';
+import { useAuth } from '../context/AuthContext';
 
-const APP_VERSION = '1.0.0';
+const APP_VERSION = __APP_VERSION__;
 
 export function Settings() {
   const navigate = useNavigate();
-  const { settings, saveSettings, exportToFile, importFromFile, garden, resetAll } = useGardenStore();
+  const { settings, saveSettings, exportToFile, importFromFile, garden, resetAll, adapter } = useGardenStore();
+  const { user } = AUTH_ENABLED ? useAuth() : { user: null };
+  const isUsingRemote = adapter instanceof RemoteAdapter;
 
   const [form, setForm] = useState({
     zipcode: settings.zipcode,
@@ -278,29 +282,80 @@ export function Settings() {
         </div>
       )}
 
-      {/* Backend */}
-      <div className="card page-section">
-        <div className="card-header">
-          <div className="card-title">Backend (Optional)</div>
+      {/* Account & Plan — auth mode, cloud sync users only */}
+      {AUTH_ENABLED && user && isUsingRemote ? (
+        <div className="card page-section">
+          <div className="card-header">
+            <div className="card-title">Account & Plan</div>
+          </div>
+
+          {/* Tier badge */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+            {(() => {
+              const isWhitelisted = isUsingRemote && !user.isAdmin && user.tier !== 'paid';
+              const label = user.isAdmin ? '⭐ Admin'
+                : user.tier === 'paid' ? '✨ Pro'
+                : isWhitelisted ? '🌿 Whitelisted'
+                : 'Free';
+              const bg = user.isAdmin ? 'var(--color-primary-dark)'
+                : user.tier === 'paid' ? 'var(--color-accent)'
+                : isWhitelisted ? 'var(--color-primary)'
+                : 'var(--color-surface-alt)';
+              const color = user.isAdmin || user.tier === 'paid' || isWhitelisted
+                ? '#fff'
+                : 'var(--color-text-muted)';
+              return (
+                <span style={{
+                  padding: '0.25rem 0.75rem',
+                  borderRadius: '999px',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  background: bg,
+                  color,
+                  border: '1px solid var(--color-border)',
+                }}>
+                  {label}
+                </span>
+              );
+            })()}
+            <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+              {user.email}
+            </span>
+          </div>
+
+          {/* Sync info */}
+          <div className="alert alert-info" style={{ marginBottom: 0 }}>
+            <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>☁️ Cloud sync active</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+              Your data syncs to <code>{window.location.origin}/api</code>
+            </div>
+          </div>
         </div>
-        <p className="text-sm text-muted" style={{ marginBottom: '0.75rem' }}>
-          Leave blank to store everything locally in this browser. Set to your API server
-          address to sync across devices — auto-detected on next app load.
-        </p>
-        <div className="form-group">
-          <label className="form-label">API Base URL</label>
-          <input
-            className="form-input"
-            placeholder="http://192.168.1.100:5000"
-            value={form.apiBaseUrl}
-            onChange={(e) => setForm({ ...form, apiBaseUrl: e.target.value })}
-          />
+      ) : !isUsingRemote ? (
+        /* Anyone on local storage: self-hosted, not signed in, or free tier */
+        <div className="card page-section">
+          <div className="card-header">
+            <div className="card-title">Backend (Optional)</div>
+          </div>
+          <p className="text-sm text-muted" style={{ marginBottom: '0.75rem' }}>
+            Leave blank to store everything locally in this browser. Set to your own API server
+            address to sync across devices — auto-detected on next app load.
+          </p>
+          <div className="form-group">
+            <label className="form-label">API Base URL</label>
+            <input
+              className="form-input"
+              placeholder="http://192.168.1.100:5000"
+              value={form.apiBaseUrl}
+              onChange={(e) => setForm({ ...form, apiBaseUrl: e.target.value })}
+            />
+          </div>
+          <div className="alert alert-info">
+            Currently using:{' '}
+            <strong>Local storage (this device)</strong>
+          </div>
         </div>
-        <div className="alert alert-info">
-          Currently using:{' '}
-          <strong>{settings.storageMode === 'remote' ? 'Remote API' : 'Local storage (browser)'}</strong>
-        </div>
-      </div>
+      ) : null}
 
       <button
         className={`btn btn-full${saved ? ' btn-secondary' : ' btn-primary'}`}
@@ -399,8 +454,8 @@ export function Settings() {
         )}
       </div>
 
-      {/* Household / Multi-device Sync */}
-      <div className="card page-section">
+      {/* Household / Multi-device Sync — self-hosted only */}
+      {!AUTH_ENABLED && <div className="card page-section">
         <div className="card-header">
           <div className="card-title">Household Sync</div>
         </div>
@@ -464,7 +519,7 @@ export function Settings() {
             {householdMsg}
           </div>
         )}
-      </div>
+      </div>}
 
       {/* Season History */}
       <div className="card page-section">
@@ -486,6 +541,23 @@ export function Settings() {
       >
         Re-run Setup Wizard
       </button>
+
+      {/* Help & Resources */}
+      <div className="card page-section">
+        <div className="card-header">
+          <div className="card-title">Help &amp; Resources</div>
+        </div>
+        <div className="about-legal-list">
+          <Link to="/tutorial" className="about-legal-row">
+            <span>🎓 Interactive App Tutorial</span>
+            <span className="about-legal-chevron">›</span>
+          </Link>
+          <Link to="/guide" className="about-legal-row">
+            <span>📖 Garden Planning Guide</span>
+            <span className="about-legal-chevron">›</span>
+          </Link>
+        </div>
+      </div>
 
       {/* About & Legal */}
       <div className="card page-section">

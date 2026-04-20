@@ -1,9 +1,11 @@
 User-agent: *
 Allow: /
-Disallow: /dashboard
+Allow: /guide
+Allow: /tutorial
+Allow: /seeds
+Allow: /dashboard
 Disallow: /planner
 Disallow: /calendar
-Disallow: /seeds
 Disallow: /log
 Disallow: /settings
 Disallow: /seasons

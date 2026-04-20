@@ -3,31 +3,40 @@ using Microsoft.EntityFrameworkCore;
 namespace GardenApp.Api.Data;
 
 /// <summary>
-/// Initialises the SQLite database on startup.
+/// Initialises the database on startup.
 ///
 /// Strategy:
-///   1. <c>EnsureCreated</c> — creates all tables from the current EF model if
-///      the DB file does not yet exist.  For a new install this is all that runs.
-///   2. Safe <c>ALTER TABLE … ADD COLUMN</c> statements — adds any columns that
-///      were introduced in later versions so existing DB files are upgraded
-///      without losing data.  SQLite does not support IF NOT EXISTS on ALTER
-///      TABLE, so we catch and swallow the "duplicate column" error.
+///   - EnsureCreated: creates all tables from the current EF model if they don't
+///     exist yet. Works for both SQLite (dev/self-hosted) and PostgreSQL (hosted).
+///   - SQLite-only ALTER TABLE: applies additive column migrations for existing
+///     SQLite installs that pre-date certain columns. PostgreSQL fresh installs
+///     get the full schema from EnsureCreated and don't need these.
 /// </summary>
 public static class DatabaseInitializer
 {
     public static async Task InitializeAsync(AppDbContext db)
     {
-        // Create tables that don't exist yet (no-op if already up to date)
+        // Creates all tables that don't yet exist; no-op if schema is up to date
         await db.Database.EnsureCreatedAsync();
 
-        // Safely apply additive schema changes for installs that pre-date
-        // the HouseholdId column on each list table.
+        // The ALTER TABLE workarounds below are SQLite-specific.
+        // PostgreSQL (and any fresh install) gets the correct schema from EnsureCreated above.
+        var isSqlite = db.Database.ProviderName?
+            .Contains("Sqlite", StringComparison.OrdinalIgnoreCase) == true;
+
+        if (!isSqlite)
+            return;
+
+        // ── Additive column migrations for SQLite upgrades ─────────────────
+        // SQLite does not support ALTER TABLE … ADD COLUMN IF NOT EXISTS, so we
+        // catch the "duplicate column" error and treat it as a no-op.
+
         await AddColumnSafe(db, "ALTER TABLE UserSeeds     ADD COLUMN HouseholdId TEXT NOT NULL DEFAULT 'default'");
         await AddColumnSafe(db, "ALTER TABLE Tasks         ADD COLUMN HouseholdId TEXT NOT NULL DEFAULT 'default'");
         await AddColumnSafe(db, "ALTER TABLE ActivityLogs  ADD COLUMN HouseholdId TEXT NOT NULL DEFAULT 'default'");
         await AddColumnSafe(db, "ALTER TABLE Seasons       ADD COLUMN HouseholdId TEXT NOT NULL DEFAULT 'default'");
 
-        // YieldAmount / YieldUnit were added in the yield-log feature
+        // YieldAmount / YieldUnit added in the yield-log feature
         await AddColumnSafe(db, "ALTER TABLE ActivityLogs  ADD COLUMN YieldAmount REAL");
         await AddColumnSafe(db, "ALTER TABLE ActivityLogs  ADD COLUMN YieldUnit   TEXT");
 
@@ -41,11 +50,6 @@ public static class DatabaseInitializer
         await AddColumnSafe(db, "ALTER TABLE Settings ADD COLUMN PlotTopEdge  TEXT");
     }
 
-    /// <summary>
-    /// Runs an ALTER TABLE … ADD COLUMN statement and silently ignores the
-    /// "duplicate column name" error that SQLite raises if the column
-    /// already exists.
-    /// </summary>
     private static async Task AddColumnSafe(AppDbContext db, string sql)
     {
         try

@@ -21,17 +21,29 @@ export class RemoteAdapter implements StorageAdapter {
     this.householdId = householdId;
   }
 
-  /** Base headers added to every request. */
+  /**
+   * Base headers for every request.
+   * X-Household-Id is only sent in self-hosted mode (no auth).
+   * In auth mode the JWT cookie carries the household identity.
+   */
   private baseHeaders(): Record<string, string> {
-    return {
-      'X-Household-Id': this.householdId,
-    };
+    return this.householdId
+      ? { 'X-Household-Id': this.householdId }
+      : {};
   }
 
+  /**
+   * credentials: 'include' is required so the browser sends the HttpOnly
+   * JWT access-token cookie on same-origin requests. Without this the API
+   * returns 401 even when the cookie is present.
+   */
   private async get<T>(path: string): Promise<T> {
     const res = await fetch(`${this.base}${path}`, {
+      credentials: 'include',
       headers: this.baseHeaders(),
     });
+    if (res.status === 401) throw new Error('UNAUTHORIZED');
+    if (res.status === 403) throw new Error('SUBSCRIPTION_REQUIRED');
     if (!res.ok) throw new Error(`GET ${path} failed: ${res.status}`);
     return res.json() as Promise<T>;
   }
@@ -39,9 +51,12 @@ export class RemoteAdapter implements StorageAdapter {
   private async post<T>(path: string, body: unknown): Promise<T> {
     const res = await fetch(`${this.base}${path}`, {
       method: 'POST',
+      credentials: 'include',
       headers: { ...this.baseHeaders(), 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
+    if (res.status === 401) throw new Error('UNAUTHORIZED');
+    if (res.status === 403) throw new Error('SUBSCRIPTION_REQUIRED');
     if (!res.ok) throw new Error(`POST ${path} failed: ${res.status}`);
     return res.json() as Promise<T>;
   }
@@ -49,17 +64,23 @@ export class RemoteAdapter implements StorageAdapter {
   private async put(path: string, body: unknown): Promise<void> {
     const res = await fetch(`${this.base}${path}`, {
       method: 'PUT',
+      credentials: 'include',
       headers: { ...this.baseHeaders(), 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
+    if (res.status === 401) throw new Error('UNAUTHORIZED');
+    if (res.status === 403) throw new Error('SUBSCRIPTION_REQUIRED');
     if (!res.ok) throw new Error(`PUT ${path} failed: ${res.status}`);
   }
 
   private async del(path: string): Promise<void> {
     const res = await fetch(`${this.base}${path}`, {
       method: 'DELETE',
+      credentials: 'include',
       headers: this.baseHeaders(),
     });
+    if (res.status === 401) throw new Error('UNAUTHORIZED');
+    if (res.status === 403) throw new Error('SUBSCRIPTION_REQUIRED');
     if (!res.ok) throw new Error(`DELETE ${path} failed: ${res.status}`);
   }
 

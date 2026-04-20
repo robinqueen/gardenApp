@@ -2,7 +2,15 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// Version is injected at build time via the VITE_APP_VERSION environment variable.
+// - Docker builds: passed as --build-arg VITE_APP_VERSION=x.y.z from build.ps1
+// - Local dev: falls back to "dev"
+// Access in app code as: __APP_VERSION__
+
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(process.env.VITE_APP_VERSION ?? 'dev'),
+  },
   plugins: [
     react(),
     VitePWA({
@@ -20,7 +28,27 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,glb,gltf}']
+        // Precache hashed JS/CSS/images only — NOT html.
+        // HTML is served via NetworkFirst so users always get the latest after a deploy.
+        globPatterns: ['**/*.{js,css,ico,png,svg,glb,gltf}'],
+        // Disable the precache-based navigation fallback — our runtimeCaching handles it.
+        navigateFallback: null,
+        // Never intercept auth routes — they must reach the server for OAuth to work.
+        navigateFallbackDenylist: [/^\/auth\//],
+        // Immediately claim all open tabs when a new SW activates.
+        clientsClaim: true,
+        runtimeCaching: [
+          {
+            // Navigation requests (page loads) always go to the network first.
+            // Falls back to cache only when offline.
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'pages',
+              networkTimeoutSeconds: 3,
+            },
+          },
+        ],
       }
     })
   ],

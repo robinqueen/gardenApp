@@ -173,7 +173,14 @@ export const useGardenStore = create<GardenState & GardenActions>((set, get) => 
 
       set({ settings, garden, userSeeds, customSeeds, tasks, activityLogs, seasons, loading: false });
     } catch (e) {
-      set({ error: String(e), loading: false });
+      set({ loading: false });
+      // Let the caller (App.tsx) handle subscription/auth errors so it can
+      // fall back to LocalAdapter. All other errors are stored for display.
+      if (e instanceof Error &&
+          (e.message === 'SUBSCRIPTION_REQUIRED' || e.message === 'UNAUTHORIZED')) {
+        throw e;
+      }
+      set({ error: String(e) });
     }
   },
 

@@ -11,6 +11,8 @@
     <meta name="keywords" content="vegetable garden planner, seed starting calculator, raised bed planner, planting calendar, frost date calculator, garden planning app, succession planting, garden task tracker" />
     <meta name="author" content="My Living Garden" />
     <meta name="robots" content="index, follow" />
+    <!-- Canonical is updated dynamically per-route by CanonicalSync.tsx -->
+    <!-- This default covers the brief pre-React window and no-JS crawlers -->
     <link rel="canonical" href="https://mylivinggarden.com/" />
 
     <!-- Open Graph (Facebook, iMessage, Discord previews) -->
@@ -63,14 +65,13 @@
     }
     </script>
 
-    <!-- Favicon (fixes "Add a favicon markup" tip) -->
+    <!-- Favicon -->
     <link rel="icon" href="/icon-192.png" type="image/png" />
     <link rel="shortcut icon" href="/icon-192.png" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png" />
     <link rel="apple-touch-icon" sizes="512x512" href="/icon-512.png" />
 
-    <!-- Title matches content closely (fixes "page title match" warning) -->
     <title>My Living Garden — Free Vegetable Garden Planner</title>
 
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-D2FEZBCQ2X"></script>
@@ -97,78 +98,60 @@
     <div id="root"></div>
 
     <!--
-      Static content for search engine crawlers.
-      React replaces #root on load; this block sits outside it so crawlers
-      that don't execute JS still see an H1, headings, description, and links.
-      Visually hidden — real UI is rendered by React above.
+      Shown only when JavaScript is disabled or not executed (e.g. some crawlers).
+      Real users always see the React app above — noscript content is invisible to them.
     -->
-    <div id="seo-static" style="position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;">
-      <h1>My Living Garden — Free Vegetable Garden Planner</h1>
-      <p>
-        My Living Garden is a free vegetable garden planner that helps you map raised beds,
-        calculate seed starting dates, build a planting calendar, track harvests, and plan
-        succession planting — all offline, with no account required.
-      </p>
-
-      <h2>Plan Your Raised Beds</h2>
-      <p>Draw and label your garden beds on a visual grid. Assign plants to each bed and
-        carry your layout forward season after season.</p>
-
-      <h2>Seed Starting Calculator</h2>
-      <p>Enter your zip code to look up your local frost date, then get exact weeks-before-frost
-        starting dates for every vegetable and herb in your garden.</p>
-
-      <h2>Planting Calendar &amp; Task Scheduler</h2>
-      <p>Automatically generate a complete planting calendar from your seed list. Schedule
-        indoor starts, transplant dates, and direct-sow windows in one place.</p>
-
-      <h2>Succession Planting Gap Finder</h2>
-      <p>Spot gaps in your planting schedule and fill them with succession crops to extend
-        your harvest window throughout the growing season.</p>
-
-      <h2>7-Day Garden Weather Forecast</h2>
-      <p>Check a hyperlocal weather forecast for your garden location before you plant,
-        water, or harvest.</p>
-
-      <h2>Harvest Tracking &amp; Activity Log</h2>
-      <p>Log each harvest with weight and notes. Review your activity history to improve
-        your garden plan year over year.</p>
-
-      <h2>Works Offline — No Account Needed</h2>
-      <p>My Living Garden is a Progressive Web App. Install it on your phone or tablet and
-        use it anywhere in the garden, even without an internet connection.</p>
-
-      <nav>
-        <a href="/">Home — My Living Garden</a>
-        <a href="/terms">Terms of Service</a>
-        <a href="/privacy">Privacy Policy</a>
-        <a href="/credits">Credits &amp; Open Source Licenses</a>
-      </nav>
-    </div>
-
-    <!-- No-JS fallback (for crawlers that skip JS entirely) -->
     <noscript>
-      <div style="font-family:sans-serif;max-width:800px;margin:2rem auto;padding:1rem;">
-        <h1>My Living Garden — Free Vegetable Garden Planner</h1>
-        <p>Plan your vegetable garden with visual raised bed mapping, seed starting date
-          calculations, a full planting calendar, succession planting suggestions, 7-day weather
-          forecasts, and harvest tracking. Free to use, works offline, no account needed.</p>
-        <ul>
-          <li>Visual raised bed planner</li>
-          <li>Seed starting calculator with frost date lookup</li>
-          <li>Planting calendar and task scheduler</li>
-          <li>Succession planting gap finder</li>
-          <li>7-day local weather forecast</li>
-          <li>Harvest tracking and activity log</li>
-          <li>Offline-capable Progressive Web App (PWA)</li>
-        </ul>
-        <p>
-          <a href="/">Get started — it's free</a> |
-          <a href="/terms">Terms of Service</a> |
-          <a href="/privacy">Privacy Policy</a> |
-          <a href="/credits">Credits</a>
+      <div style="font-family:system-ui,sans-serif;max-width:900px;margin:2rem auto;padding:1.5rem;color:#1a3a1f;line-height:1.6;">
+        <header style="display:flex;align-items:center;gap:0.6rem;margin-bottom:2rem;border-bottom:1px solid #d4e6d4;padding-bottom:1rem;">
+          <span style="font-size:1.4rem;">🌿</span>
+          <strong style="font-size:1.05rem;color:#3a7d44;">My Living Garden</strong>
+          <nav style="margin-left:auto;font-size:0.875rem;">
+            <a href="/guide" style="color:#3a7d44;margin-right:1rem;">Planting Guide</a>
+            <a href="/seeds" style="color:#3a7d44;">Seed Catalog</a>
+          </nav>
+        </header>
+
+        <h1 style="font-size:2rem;font-weight:800;margin:0 0 0.75rem;">Free Vegetable Garden Planner</h1>
+        <p style="font-size:1.05rem;color:#3d5c42;margin:0 0 1.5rem;">
+          Map raised beds, calculate seed-starting dates, and build your full planting calendar —
+          free, offline, no account needed.
         </p>
-        <p>Please enable JavaScript to use My Living Garden.</p>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin-bottom:2rem;">
+          <div style="background:#f4faf4;border:1px solid #c8e0c8;border-radius:8px;padding:1rem;">
+            <h2 style="font-size:1rem;font-weight:700;margin:0 0 0.4rem;">🛏️ Visual Bed Planner</h2>
+            <p style="font-size:0.875rem;color:#3d5c42;margin:0;">Map every raised bed and container on an interactive grid with automatic spacing guidance.</p>
+          </div>
+          <div style="background:#f4faf4;border:1px solid #c8e0c8;border-radius:8px;padding:1rem;">
+            <h2 style="font-size:1rem;font-weight:700;margin:0 0 0.4rem;">🌱 Seed Starting Calculator</h2>
+            <p style="font-size:0.875rem;color:#3d5c42;margin:0;">Enter your zip code and get exact indoor-start dates for every vegetable and herb.</p>
+          </div>
+          <div style="background:#f4faf4;border:1px solid #c8e0c8;border-radius:8px;padding:1rem;">
+            <h2 style="font-size:1rem;font-weight:700;margin:0 0 0.4rem;">📅 Planting Calendar</h2>
+            <p style="font-size:0.875rem;color:#3d5c42;margin:0;">Your full season schedule auto-generates from seed tray prep through harvest.</p>
+          </div>
+          <div style="background:#f4faf4;border:1px solid #c8e0c8;border-radius:8px;padding:1rem;">
+            <h2 style="font-size:1rem;font-weight:700;margin:0 0 0.4rem;">🔄 Succession Gap Finder</h2>
+            <p style="font-size:0.875rem;color:#3d5c42;margin:0;">After harvest, the app spots open bed windows and suggests crops you can still fit in.</p>
+          </div>
+          <div style="background:#f4faf4;border:1px solid #c8e0c8;border-radius:8px;padding:1rem;">
+            <h2 style="font-size:1rem;font-weight:700;margin:0 0 0.4rem;">🌦️ 7-Day Weather Forecast</h2>
+            <p style="font-size:0.875rem;color:#3d5c42;margin:0;">Local forecast with freeze alerts so you know before you transplant.</p>
+          </div>
+          <div style="background:#f4faf4;border:1px solid #c8e0c8;border-radius:8px;padding:1rem;">
+            <h2 style="font-size:1rem;font-weight:700;margin:0 0 0.4rem;">📋 Harvest &amp; Activity Log</h2>
+            <p style="font-size:0.875rem;color:#3d5c42;margin:0;">Track waterings, harvests, and observations. Build a season-over-season record.</p>
+          </div>
+        </div>
+
+        <p style="font-size:0.875rem;color:#3d5c42;">
+          <a href="/guide" style="color:#3a7d44;">Read the garden planning guide</a> ·
+          <a href="/seeds" style="color:#3a7d44;">Browse the seed catalog</a> ·
+          <a href="/terms" style="color:#3a7d44;">Terms</a> ·
+          <a href="/privacy" style="color:#3a7d44;">Privacy</a>
+        </p>
+        <p style="font-size:0.875rem;color:#888;margin-top:1.5rem;">Please enable JavaScript to use My Living Garden.</p>
       </div>
     </noscript>
 

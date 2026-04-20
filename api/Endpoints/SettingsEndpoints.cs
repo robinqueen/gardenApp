@@ -7,9 +7,10 @@ namespace GardenApp.Api.Endpoints;
 
 public static class SettingsEndpoints
 {
-    public static void MapSettingsEndpoints(this WebApplication app)
+    public static void MapSettingsEndpoints(this WebApplication app, bool requireAuth = false)
     {
         var group = app.MapGroup("/api/settings").WithTags("Settings");
+        if (requireAuth) group.RequireAuthorization("PaidOrAllowed");
 
         group.MapGet("/", async (HttpRequest req, AppDbContext db) =>
         {

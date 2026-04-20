@@ -1,0 +1,31 @@
+# GardenApp — Local Development
+#
+# Spins up only PostgreSQL locally so you can run the .NET API + Vite dev server
+# from your IDE/terminal with hot reload.
+#
+# Usage:
+#   docker compose -f docker-compose.dev.yml up -d
+#   cd api   && dotnet run
+#   cd client && npm run dev
+#
+# Set ASPNETCORE_ENVIRONMENT=Development so appsettings.Development.json is used
+# (Auth:Enabled = false, SQLite). Only switch to this compose file when you
+# specifically want to test against a real PostgreSQL instance locally.
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: gardenapp-db-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       gardenapp_dev
+      POSTGRES_USER:     gardenapp
+      POSTGRES_PASSWORD: devpassword
+    ports:
+      # Exposed to localhost so your local dotnet run can connect
+      - "5432:5432"
+    volumes:
+      - gardenapp-pg-dev:/var/lib/postgresql/data
+
+volumes:
+  gardenapp-pg-dev:

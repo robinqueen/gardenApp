@@ -5,15 +5,34 @@ namespace GardenApp.Api.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    public DbSet<SettingsRecord> Settings => Set<SettingsRecord>();
-    public DbSet<GardenRecord> Gardens => Set<GardenRecord>();
-    public DbSet<UserSeedRecord> UserSeeds => Set<UserSeedRecord>();
-    public DbSet<TaskRecord> Tasks => Set<TaskRecord>();
-    public DbSet<ActivityLogRecord> ActivityLogs => Set<ActivityLogRecord>();
-    public DbSet<GardenSeasonRecord> Seasons => Set<GardenSeasonRecord>();
+    // ── Auth ───────────────────────────────────────────────────
+    public DbSet<UserRecord>         Users         => Set<UserRecord>();
+    public DbSet<RefreshTokenRecord> RefreshTokens => Set<RefreshTokenRecord>();
+
+    // ── Garden data ────────────────────────────────────────────
+    public DbSet<SettingsRecord>     Settings      => Set<SettingsRecord>();
+    public DbSet<GardenRecord>       Gardens       => Set<GardenRecord>();
+    public DbSet<UserSeedRecord>     UserSeeds     => Set<UserSeedRecord>();
+    public DbSet<TaskRecord>         Tasks         => Set<TaskRecord>();
+    public DbSet<ActivityLogRecord>  ActivityLogs  => Set<ActivityLogRecord>();
+    public DbSet<GardenSeasonRecord> Seasons       => Set<GardenSeasonRecord>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
+        // Users: unique index on GoogleSub — the stable lookup key
+        builder.Entity<UserRecord>()
+            .HasIndex(u => u.GoogleSub)
+            .IsUnique();
+
+        // Refresh tokens: index on hash for O(1) lookup
+        builder.Entity<RefreshTokenRecord>()
+            .HasIndex(t => t.TokenHash)
+            .IsUnique();
+
+        // Refresh tokens: index on userId for revocation-on-logout
+        builder.Entity<RefreshTokenRecord>()
+            .HasIndex(t => t.UserId);
+
         // Tasks: composite index on household + date for filtered range queries
         builder.Entity<TaskRecord>()
             .HasIndex(t => new { t.HouseholdId, t.Date });

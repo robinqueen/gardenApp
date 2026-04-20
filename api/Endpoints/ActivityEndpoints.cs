@@ -7,10 +7,11 @@ namespace GardenApp.Api.Endpoints;
 
 public static class ActivityEndpoints
 {
-    public static void MapActivityEndpoints(this WebApplication app)
+    public static void MapActivityEndpoints(this WebApplication app, bool requireAuth = false)
     {
         // ── Tasks ──────────────────────────────────────────────
         var tasks = app.MapGroup("/api/tasks").WithTags("Tasks");
+        if (requireAuth) tasks.RequireAuthorization("PaidOrAllowed");
 
         tasks.MapGet("/", async (HttpRequest req, AppDbContext db) =>
         {
@@ -78,6 +79,7 @@ public static class ActivityEndpoints
 
         // ── Activity Log ───────────────────────────────────────
         var activity = app.MapGroup("/api/activity").WithTags("Activity");
+        if (requireAuth) activity.RequireAuthorization("PaidOrAllowed");
 
         activity.MapGet("/", async (HttpRequest req, AppDbContext db) =>
         {

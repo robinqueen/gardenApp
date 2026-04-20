@@ -1,12 +1,6 @@
 import { NavLink } from 'react-router-dom';
 
-interface NavItem {
-  to: string;
-  icon: string;
-  label: string;
-}
-
-const NAV_ITEMS: NavItem[] = [
+const NAV_ITEMS = [
   { to: '/dashboard', icon: '🏠', label: 'Home'     },
   { to: '/planner',   icon: '🌿', label: 'Garden'   },
   { to: '/calendar',  icon: '📅', label: 'Schedule' },

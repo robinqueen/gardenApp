@@ -8,11 +8,12 @@ api/dist/
 api/bin/
 api/obj/
 
-# Environment files
+# Environment files (secrets — never commit)
 .env
 .env.local
 .env.production
 .env.*.local
+# .env.example is safe to commit — it has no real secrets
 
 # Database files
 *.db
@@ -37,12 +38,18 @@ npm-debug.log*
 Thumbs.db
 desktop.ini
 
+# Personal notes (private, never commit)
+NOTES.md
+
 # Secrets / certs
 *.pem
 *.key
 *.crt
 .npmrc
 
-# .NET API config with secrets
+# RSA key directory (generated at runtime, never commit)
+api/keys/
+
+# .NET local dev config (may contain local dev paths)
 api/appsettings.Development.json
-api/appsettings.Production.json
+# appsettings.Production.json is committed — it has no secrets (secrets come from env vars)

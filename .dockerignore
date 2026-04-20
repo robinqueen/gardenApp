@@ -1,0 +1,9 @@
+node_modules
+client/node_modules
+client/dist
+api/bin
+api/obj
+.git
+.env
+*.md
+docker-compose*.yml

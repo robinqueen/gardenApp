@@ -13,10 +13,11 @@ namespace GardenApp.Api.Endpoints;
 /// </summary>
 public static class GardenEndpoints
 {
-    public static void MapGardenEndpoints(this WebApplication app)
+    public static void MapGardenEndpoints(this WebApplication app, bool requireAuth = false)
     {
         // ── Garden ─────────────────────────────────────────────
         var garden = app.MapGroup("/api/garden").WithTags("Garden");
+        if (requireAuth) garden.RequireAuthorization("PaidOrAllowed");
 
         garden.MapGet("/", async (HttpRequest req, AppDbContext db) =>
         {
@@ -50,6 +51,7 @@ public static class GardenEndpoints
 
         // ── Seeds ─────────────────────────────────────────────
         var seeds = app.MapGroup("/api/seeds").WithTags("Seeds");
+        if (requireAuth) seeds.RequireAuthorization("PaidOrAllowed");
 
         seeds.MapGet("/", async (HttpRequest req, AppDbContext db) =>
         {
@@ -96,6 +98,7 @@ public static class GardenEndpoints
 
         // ── Seasons ────────────────────────────────────────────
         var seasons = app.MapGroup("/api/seasons").WithTags("Seasons");
+        if (requireAuth) seasons.RequireAuthorization("PaidOrAllowed");
 
         seasons.MapGet("/", async (HttpRequest req, AppDbContext db) =>
         {

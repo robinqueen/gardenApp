@@ -1,0 +1,80 @@
+services:
+
+  db:
+    image: postgres:16-alpine
+    container_name: gardenapp-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: gardenapp
+      POSTGRES_USER: gardenapp
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - /mnt/user/MyLivingGarden-Postgres-Data:/var/lib/postgresql/data
+    networks:
+      - gardenapp-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gardenapp -d gardenapp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    image: fitsomewhat/mylivinggarden:latest
+    container_name: gardenapp-api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      DatabaseProvider: PostgreSQL
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=gardenapp;Username=gardenapp;Password=${DB_PASSWORD};Pooling=true;Maximum Pool Size=20"
+      Auth__Enabled: "true"
+      Auth__RsaKeyPath: /var/gardenapp/keys/rsa.pem
+      Auth__Issuer: gardenapp
+      Auth__Audience: gardenapp-api
+      Auth__AccessTokenMinutes: "15"
+      Auth__RefreshTokenDays: "7"
+      Auth__FrontendUrl: ${FRONTEND_URL}
+      Auth__AllowedOrigins__0: ${FRONTEND_URL}
+      Auth__Google__ClientId: ${GOOGLE_CLIENT_ID}
+      Auth__Google__ClientSecret: ${GOOGLE_CLIENT_SECRET}
+      Auth__BootstrapAdminEmail: ${BOOTSTRAP_ADMIN_EMAIL}
+      # Whitelisted accounts — free pass regardless of tier (admins + testers)
+      # Add more slots as needed: Auth__AllowedEmails__3, __4, etc.
+      Auth__AllowedEmails__0: ${ALLOWED_EMAIL_0}
+      Auth__AllowedEmails__1: ${ALLOWED_EMAIL_1}
+      Auth__AllowedEmails__2: ${ALLOWED_EMAIL_2}
+    volumes:
+      - /mnt/user/MyLivingGarden-Keys:/var/gardenapp/keys
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      gardenapp-net: {}
+      br0.30:
+        ipv4_address: 10.0.30.21
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: gardenapp-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    ports:
+      # LAN only — access at http://your-unraid-ip:5050
+      # This is NOT exposed to the internet (no NPM route to it)
+      - "5050:80"
+    volumes:
+      - /mnt/user/MyLivingGarden-pgAdmin:/var/lib/pgadmin
+    networks:
+      - gardenapp-net    # same internal bridge as the db — can reach gardenapp-db
+    depends_on:
+      db:
+        condition: service_healthy
+
+networks:
+  gardenapp-net:
+    driver: bridge
+  br0.30:
+    external: true

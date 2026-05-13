@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AUTH_ENABLED } from '../adapters';
 import { useGardenStore } from '../store/useGardenStore';

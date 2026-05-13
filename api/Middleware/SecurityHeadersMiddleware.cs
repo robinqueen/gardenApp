@@ -35,7 +35,7 @@ public sealed class SecurityHeadersMiddleware(RequestDelegate next)
         // - frame-ancestors 'none' : equivalent to X-Frame-Options DENY but for CSP
         h.Append("Content-Security-Policy",
             "default-src 'self'; " +
-            "script-src 'self' https://www.googletagmanager.com https://www.clarity.ms https://static.cloudflareinsights.com; " +
+            "script-src 'self' https://www.googletagmanager.com https://www.clarity.ms https://scripts.clarity.ms https://static.cloudflareinsights.com; " +
             "style-src 'self' 'unsafe-inline'; " +
             "img-src 'self' data: https:; " +
             "connect-src 'self' " +

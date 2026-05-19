@@ -8,6 +8,7 @@ import type { TaskType } from '../types';
 import { toIsoDate } from '../catalog/frostDates';
 import { detectAllGaps } from '../utils/successionGaps';
 import { GapSuggestionsPanel } from '../components/GapSuggestionsPanel';
+import { getSeedIconUrl } from '../catalog/seedIcons';
 
 const MONTHS = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -140,6 +141,7 @@ function SuccessionGantt() {
     bedName: string;
     plantName: string;
     icon: string;
+    seedId: string;
     sowDate: Date;
     harvestDate: Date;
     weekOffset: number;
@@ -183,6 +185,7 @@ function SuccessionGantt() {
           bedName: bed.name,
           plantName: seed.name,
           icon: seed.icon,
+          seedId: seed.id,
           sowDate,
           harvestDate,
           weekOffset: slot.weekOffset,
@@ -270,7 +273,11 @@ function SuccessionGantt() {
           return (
             <div key={i} className="gantt-row">
               <div className="gantt-row-label">
-                <span className="gantt-row-icon">{row.icon}</span>
+                <span className="gantt-row-icon">
+                  {getSeedIconUrl(row.seedId)
+                    ? <img src={getSeedIconUrl(row.seedId)!} className="plant-icon-img" alt={row.plantName} draggable={false} />
+                    : row.icon}
+                </span>
                 <div className="gantt-row-text">
                   <div className="gantt-row-plant">{row.plantName}</div>
                   <div className="gantt-row-bed">{row.bedName}{row.weekOffset > 0 ? ` +${row.weekOffset}w` : ''}</div>
@@ -295,7 +302,11 @@ function SuccessionGantt() {
                   }}
                   title={`${row.plantName}: ${row.sowDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} → ${row.harvestDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
                 >
-                  <span className="gantt-bar-label">{row.icon}</span>
+                  <span className="gantt-bar-label">
+                    {getSeedIconUrl(row.seedId)
+                      ? <img src={getSeedIconUrl(row.seedId)!} className="plant-icon-img" alt={row.plantName} draggable={false} />
+                      : row.icon}
+                  </span>
                 </div>
                 {/* Today marker */}
                 {todayPct >= 0 && todayPct <= 100 && (

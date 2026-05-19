@@ -2,6 +2,7 @@ import type { Task } from '../types';
 import { TASK_ICONS, TASK_LABELS } from '../utils/plantingSchedule';
 import { SEED_CATALOG } from '../catalog/seeds';
 import { parseIsoDate } from '../catalog/frostDates';
+import { PlantIcon } from './PlantIcon';
 
 interface TaskCardProps {
   task: Task;
@@ -26,7 +27,7 @@ export function TaskCard({ task, onToggle, onDelete }: TaskCardProps) {
 
       <div className="task-content">
         <div className="task-title">
-          {seed ? `${seed.icon} ` : ''}{task.title}
+          {seed && <><PlantIcon seed={seed} />{' '}</>}{task.title}
         </div>
         {task.description && (
           <div className="task-desc">{task.description}</div>

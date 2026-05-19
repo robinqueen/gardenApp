@@ -10,6 +10,7 @@ import { PlantingWindowBadge } from '../components/PlantingWindowBadge';
 import { WeatherStrip } from '../components/WeatherStrip';
 import { detectAllGaps } from '../utils/successionGaps';
 import { GapSuggestionsPanel } from '../components/GapSuggestionsPanel';
+import { getSeedIconUrl } from '../catalog/seedIcons';
 
 // ─── Helpers ──────────────────────────────────────────────────
 
@@ -184,7 +185,7 @@ export function Dashboard() {
 
   // ── Upcoming transplants (ready-to-transplant or seeds-started) ─
   const readyToAction = useMemo(() => {
-    const result: { bedName: string; seedName: string; seedIcon: string; stage: PlantStage; task?: (typeof tasks)[0] }[] = [];
+    const result: { bedName: string; seedName: string; seedIcon: string; plantId: string; stage: PlantStage; task?: (typeof tasks)[0] }[] = [];
 
     for (const bed of beds) {
       for (const slot of bed.slots) {
@@ -195,7 +196,7 @@ export function Dashboard() {
         const transplantTask = tasks.find(
           (tk) => tk.slotId === slot.id && tk.type === 'transplant' && !tk.completed
         );
-        result.push({ bedName: bed.name, seedName: seed.name, seedIcon: seed.icon, stage, task: transplantTask });
+        result.push({ bedName: bed.name, seedName: seed.name, seedIcon: seed.icon, plantId: seed.id, stage, task: transplantTask });
       }
     }
     return result;
@@ -308,7 +309,11 @@ export function Dashboard() {
           <div className="dash-section-label">🪴 Needs attention</div>
           {readyToAction.map((p, i) => (
             <div key={i} className="dash-plant-row">
-              <span className="dash-plant-icon">{p.seedIcon}</span>
+              <span className="dash-plant-icon">
+                {getSeedIconUrl(p.plantId)
+                  ? <img src={getSeedIconUrl(p.plantId)!} className="plant-icon-img" alt={p.seedName} draggable={false} />
+                  : p.seedIcon}
+              </span>
               <div className="dash-plant-info">
                 <div className="fw-bold">{p.seedName}</div>
                 <div className="text-sm text-muted">
@@ -332,7 +337,11 @@ export function Dashboard() {
             const daysToHarvest = harvest ? daysFrom(harvest) : null;
             return (
               <div key={p.slotId} className="dash-plant-row">
-                <span className="dash-plant-icon">{p.seedIcon}</span>
+                <span className="dash-plant-icon">
+                {getSeedIconUrl(p.plantId)
+                  ? <img src={getSeedIconUrl(p.plantId)!} className="plant-icon-img" alt={p.seedName} draggable={false} />
+                  : p.seedIcon}
+              </span>
                 <div className="dash-plant-info">
                   <div className="fw-bold">{p.seedName}</div>
                   <div className="text-sm text-muted">{p.bedName}</div>

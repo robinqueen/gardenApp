@@ -6,8 +6,38 @@ import { useGardenStore } from '../store/useGardenStore';
 import { SEED_CATALOG } from '../catalog/seeds';
 import type { Bed, PlantSlot, CatalogSeed, HeightCategory } from '../types';
 
-// Vite resolves the import to a hashed public URL at build time
-import tomatoGlbUrl from '../assets/plants/tomato_plant.glb?url';
+// Vite resolves each import to a hashed public URL at build time
+import tomatoGlbUrl        from '../assets/plants/tomato_plant.glb?url';
+import beanGlbUrl          from '../assets/plants/bean_plant.glb?url';
+import pepperGlbUrl        from '../assets/plants/pepper_plant.glb?url';
+import chilliGlbUrl        from '../assets/plants/chilli_plant.glb?url';
+import cornGlbUrl          from '../assets/plants/corn_plant.glb?url';
+import leafy1GlbUrl        from '../assets/plants/leafy_plant_01.glb?url';
+import leafy2GlbUrl        from '../assets/plants/leafy_plant_02.glb?url';
+import leafy3GlbUrl        from '../assets/plants/leafy_plant_03.glb?url';
+import potatoGlbUrl        from '../assets/plants/potato_plant.glb?url';
+import strawberryGlbUrl    from '../assets/plants/strawberry_plant.glb?url';
+import wheatGlbUrl         from '../assets/plants/wheat_plant.glb?url';
+import sunflowerGlbUrl     from '../assets/plants/sunflower_plant.glb?url';
+import pumpkinGlbUrl       from '../assets/plants/pumpkin_plant.glb?url';
+import squashGlbUrl        from '../assets/plants/squash_plant.glb?url';
+import eggplantGlbUrl      from '../assets/plants/eggplant_plant.glb?url';
+import broccoliGlbUrl      from '../assets/plants/broccoli_plant.glb?url';
+import cabbageGlbUrl       from '../assets/plants/cabbage_plant.glb?url';
+import lettuceGlbUrl       from '../assets/plants/lettuce_plant.glb?url';
+import cucumberGlbUrl      from '../assets/plants/cucumber_plant.glb?url';
+import beetrootGlbUrl      from '../assets/plants/beetroot_plant.glb?url';
+import onionGlbUrl         from '../assets/plants/onion_plant.glb?url';
+import asparagusGlbUrl     from '../assets/plants/asparagus_plant.glb?url';
+import appleTreeGlbUrl     from '../assets/plants/apple_tree.glb?url';
+import lemonTreeGlbUrl     from '../assets/plants/lemon_tree.glb?url';
+import orangeTreeGlbUrl    from '../assets/plants/orange_tree.glb?url';
+import cherryTreeGlbUrl    from '../assets/plants/cherry_tree.glb?url';
+import peachTreeGlbUrl     from '../assets/plants/peach_tree.glb?url';
+import pearTreeGlbUrl      from '../assets/plants/pear_tree.glb?url';
+import plumTreeGlbUrl      from '../assets/plants/plum_tree.glb?url';
+import apricotTreeGlbUrl   from '../assets/plants/apricot_tree.glb?url';
+import { getSeedIconUrl } from '../catalog/seedIcons';
 
 // ─── Constants ────────────────────────────────────────────────
 
@@ -493,12 +523,212 @@ interface Garden3DViewProps {
 // as you drop GLB files into src/assets/plants/.
 //
 const PLANT_MODELS: Record<string, { url: string; scale: number; yOffset: number }> = {
-  tomato: { url: tomatoGlbUrl, scale: 0.012, yOffset: 0 },
+  // ── Tomatoes ──────────────────────────────────────────────────
+  'tomato':                  { url: tomatoGlbUrl,     scale: 0.012, yOffset: 0 },
+  'tomato-sun-gold':         { url: tomatoGlbUrl,     scale: 0.010, yOffset: 0 },
+  'tomato-sweet-million':    { url: tomatoGlbUrl,     scale: 0.010, yOffset: 0 },
+  'tomato-black-cherry':     { url: tomatoGlbUrl,     scale: 0.010, yOffset: 0 },
+  'tomato-brandywine':       { url: tomatoGlbUrl,     scale: 0.014, yOffset: 0 },
+  'tomato-cherokee-purple':  { url: tomatoGlbUrl,     scale: 0.014, yOffset: 0 },
+  'tomato-early-girl':       { url: tomatoGlbUrl,     scale: 0.012, yOffset: 0 },
+  'tomato-celebrity':        { url: tomatoGlbUrl,     scale: 0.012, yOffset: 0 },
+  'tomato-san-marzano':      { url: tomatoGlbUrl,     scale: 0.012, yOffset: 0 },
+  'tomato-roma':             { url: tomatoGlbUrl,     scale: 0.011, yOffset: 0 },
+  'tomato-mortgage-lifter':  { url: tomatoGlbUrl,     scale: 0.014, yOffset: 0 },
+  'tomato-jet-star':         { url: tomatoGlbUrl,     scale: 0.012, yOffset: 0 },
+  // ── Peppers ───────────────────────────────────────────────────
+  'pepper':                  { url: pepperGlbUrl,     scale: 0.012, yOffset: 0 },
+  'pepper-california-wonder':{ url: pepperGlbUrl,     scale: 0.012, yOffset: 0 },
+  'pepper-carmen':           { url: pepperGlbUrl,     scale: 0.012, yOffset: 0 },
+  'pepper-banana':           { url: pepperGlbUrl,     scale: 0.012, yOffset: 0 },
+  'pepper-jalapeno':         { url: chilliGlbUrl,     scale: 0.011, yOffset: 0 },
+  'pepper-poblano':          { url: chilliGlbUrl,     scale: 0.012, yOffset: 0 },
+  'pepper-cayenne':          { url: chilliGlbUrl,     scale: 0.011, yOffset: 0 },
+  'pepper-shishito':         { url: chilliGlbUrl,     scale: 0.010, yOffset: 0 },
+  // ── Eggplant ──────────────────────────────────────────────────
+  'eggplant':                { url: eggplantGlbUrl,   scale: 0.012, yOffset: 0 },
+  'eggplant-black-beauty':   { url: eggplantGlbUrl,   scale: 0.012, yOffset: 0 },
+  'eggplant-ichiban':        { url: eggplantGlbUrl,   scale: 0.011, yOffset: 0 },
+  'eggplant-rosa-bianca':    { url: eggplantGlbUrl,   scale: 0.012, yOffset: 0 },
+  // ── Cucumber ──────────────────────────────────────────────────
+  'cucumber':                { url: cucumberGlbUrl,   scale: 0.012, yOffset: 0 },
+  'cucumber-marketmore':     { url: cucumberGlbUrl,   scale: 0.012, yOffset: 0 },
+  'cucumber-boston-pickling':{ url: cucumberGlbUrl,   scale: 0.010, yOffset: 0 },
+  'cucumber-persian-mini':   { url: cucumberGlbUrl,   scale: 0.009, yOffset: 0 },
+  'cucumber-lemon':          { url: cucumberGlbUrl,   scale: 0.010, yOffset: 0 },
+  'cucumber-english':        { url: cucumberGlbUrl,   scale: 0.013, yOffset: 0 },
+  // ── Squash & Pumpkin ──────────────────────────────────────────
+  'pumpkin':                 { url: pumpkinGlbUrl,    scale: 0.014, yOffset: 0 },
+  'squash-sugar-pumpkin':    { url: pumpkinGlbUrl,    scale: 0.013, yOffset: 0 },
+  'squash':                  { url: squashGlbUrl,     scale: 0.013, yOffset: 0 },
+  'squash-black-beauty':     { url: squashGlbUrl,     scale: 0.012, yOffset: 0 },
+  'squash-costata-romanesco':{ url: squashGlbUrl,     scale: 0.012, yOffset: 0 },
+  'squash-yellow-straightneck':{ url: squashGlbUrl,  scale: 0.012, yOffset: 0 },
+  'squash-pattypan':         { url: squashGlbUrl,     scale: 0.011, yOffset: 0 },
+  'squash-waltham-butternut':{ url: squashGlbUrl,     scale: 0.013, yOffset: 0 },
+  'squash-delicata':         { url: squashGlbUrl,     scale: 0.012, yOffset: 0 },
+  'squash-acorn':            { url: squashGlbUrl,     scale: 0.012, yOffset: 0 },
+  'squash-spaghetti':        { url: squashGlbUrl,     scale: 0.013, yOffset: 0 },
+  // ── Beans & Peas ──────────────────────────────────────────────
+  'bean':                    { url: beanGlbUrl,       scale: 0.012, yOffset: 0 },
+  'bean-blue-lake':          { url: beanGlbUrl,       scale: 0.012, yOffset: 0 },
+  'bean-kentucky-wonder':    { url: beanGlbUrl,       scale: 0.013, yOffset: 0 },
+  'bean-provider':           { url: beanGlbUrl,       scale: 0.012, yOffset: 0 },
+  'bean-dragon-tongue':      { url: beanGlbUrl,       scale: 0.011, yOffset: 0 },
+  'bean-scarlet-runner':     { url: beanGlbUrl,       scale: 0.013, yOffset: 0 },
+  'bean-edamame':            { url: beanGlbUrl,       scale: 0.011, yOffset: 0 },
+  'pea':                     { url: beanGlbUrl,       scale: 0.011, yOffset: 0 },
+  'pea-sugar-snap':          { url: beanGlbUrl,       scale: 0.012, yOffset: 0 },
+  'pea-snow':                { url: beanGlbUrl,       scale: 0.011, yOffset: 0 },
+  'pea-lincoln':             { url: beanGlbUrl,       scale: 0.012, yOffset: 0 },
+  // ── Lettuce & Salad Greens ────────────────────────────────────
+  'lettuce':                 { url: lettuceGlbUrl,    scale: 0.012, yOffset: 0 },
+  'lettuce-buttercrunch':    { url: lettuceGlbUrl,    scale: 0.011, yOffset: 0 },
+  'lettuce-romaine':         { url: lettuceGlbUrl,    scale: 0.013, yOffset: 0 },
+  'lettuce-red-sails':       { url: lettuceGlbUrl,    scale: 0.012, yOffset: 0 },
+  'lettuce-oakleaf':         { url: lettuceGlbUrl,    scale: 0.011, yOffset: 0 },
+  'arugula':                 { url: leafy1GlbUrl,     scale: 0.010, yOffset: 0 },
+  'endive':                  { url: leafy1GlbUrl,     scale: 0.010, yOffset: 0 },
+  'lettuce-mesclun':         { url: leafy1GlbUrl,     scale: 0.010, yOffset: 0 },
+  // ── Spinach ───────────────────────────────────────────────────
+  'spinach':                 { url: leafy2GlbUrl,     scale: 0.011, yOffset: 0 },
+  'spinach-bloomsdale':      { url: leafy2GlbUrl,     scale: 0.011, yOffset: 0 },
+  'spinach-regiment':        { url: leafy2GlbUrl,     scale: 0.011, yOffset: 0 },
+  'spinach-new-zealand':     { url: leafy2GlbUrl,     scale: 0.011, yOffset: 0 },
+  // ── Kale, Chard, Collards ─────────────────────────────────────
+  'kale':                    { url: leafy3GlbUrl,     scale: 0.013, yOffset: 0 },
+  'kale-lacinato':           { url: leafy3GlbUrl,     scale: 0.013, yOffset: 0 },
+  'kale-red-russian':        { url: leafy3GlbUrl,     scale: 0.013, yOffset: 0 },
+  'kale-curly':              { url: leafy3GlbUrl,     scale: 0.013, yOffset: 0 },
+  'chard':                   { url: leafy3GlbUrl,     scale: 0.013, yOffset: 0 },
+  'collard':                 { url: leafy3GlbUrl,     scale: 0.014, yOffset: 0 },
+  // ── Brassicas ─────────────────────────────────────────────────
+  'broccoli':                { url: broccoliGlbUrl,   scale: 0.013, yOffset: 0 },
+  'broccoli-di-cicco':       { url: broccoliGlbUrl,   scale: 0.012, yOffset: 0 },
+  'broccoli-gypsy':          { url: broccoliGlbUrl,   scale: 0.012, yOffset: 0 },
+  'broccoli-romanesco':      { url: broccoliGlbUrl,   scale: 0.013, yOffset: 0 },
+  'cauliflower':             { url: broccoliGlbUrl,   scale: 0.013, yOffset: 0 },
+  'cabbage':                 { url: cabbageGlbUrl,    scale: 0.013, yOffset: 0 },
+  'cabbage-red':             { url: cabbageGlbUrl,    scale: 0.013, yOffset: 0 },
+  'brussels-sprouts':        { url: cabbageGlbUrl,    scale: 0.012, yOffset: 0 },
+  'kohlrabi':                { url: cabbageGlbUrl,    scale: 0.011, yOffset: 0 },
+  // ── Root Vegetables ───────────────────────────────────────────
+  'carrot':                  { url: leafy1GlbUrl,     scale: 0.010, yOffset: 0 },
+  'carrot-danvers':          { url: leafy1GlbUrl,     scale: 0.010, yOffset: 0 },
+  'carrot-nantes':           { url: leafy1GlbUrl,     scale: 0.010, yOffset: 0 },
+  'carrot-bolero':           { url: leafy1GlbUrl,     scale: 0.010, yOffset: 0 },
+  'carrot-purple-haze':      { url: leafy1GlbUrl,     scale: 0.010, yOffset: 0 },
+  'carrot-chantenay':        { url: leafy1GlbUrl,     scale: 0.010, yOffset: 0 },
+  'beet':                    { url: beetrootGlbUrl,   scale: 0.012, yOffset: 0 },
+  'beet-detroit-dark-red':   { url: beetrootGlbUrl,   scale: 0.012, yOffset: 0 },
+  'beet-golden':             { url: beetrootGlbUrl,   scale: 0.012, yOffset: 0 },
+  'beet-chioggia':           { url: beetrootGlbUrl,   scale: 0.012, yOffset: 0 },
+  'radish':                  { url: leafy2GlbUrl,     scale: 0.009, yOffset: 0 },
+  'radish-cherry-belle':     { url: leafy2GlbUrl,     scale: 0.009, yOffset: 0 },
+  'radish-french-breakfast': { url: leafy2GlbUrl,     scale: 0.009, yOffset: 0 },
+  'radish-daikon':           { url: leafy2GlbUrl,     scale: 0.010, yOffset: 0 },
+  'radish-easter-egg':       { url: leafy2GlbUrl,     scale: 0.009, yOffset: 0 },
+  'potato':                  { url: potatoGlbUrl,     scale: 0.012, yOffset: 0 },
+  // ── Alliums ───────────────────────────────────────────────────
+  'onion':                   { url: onionGlbUrl,      scale: 0.012, yOffset: 0 },
+  'onion-copra':             { url: onionGlbUrl,      scale: 0.012, yOffset: 0 },
+  'onion-red-burgundy':      { url: onionGlbUrl,      scale: 0.012, yOffset: 0 },
+  'scallion':                { url: onionGlbUrl,      scale: 0.009, yOffset: 0 },
+  'leek':                    { url: onionGlbUrl,      scale: 0.011, yOffset: 0 },
+  'garlic':                  { url: onionGlbUrl,      scale: 0.009, yOffset: 0 },
+  'shallot':                 { url: onionGlbUrl,      scale: 0.009, yOffset: 0 },
+  // ── Corn ──────────────────────────────────────────────────────
+  'corn':                    { url: cornGlbUrl,       scale: 0.014, yOffset: 0 },
+  'corn-peaches-cream':      { url: cornGlbUrl,       scale: 0.014, yOffset: 0 },
+  'corn-silver-queen':       { url: cornGlbUrl,       scale: 0.015, yOffset: 0 },
+  'corn-bodacious':          { url: cornGlbUrl,       scale: 0.014, yOffset: 0 },
+  // ── Melon & Watermelon ────────────────────────────────────────
+  'melon':                   { url: squashGlbUrl,     scale: 0.013, yOffset: 0 },
+  'melon-hales-best':        { url: squashGlbUrl,     scale: 0.013, yOffset: 0 },
+  'melon-honeydew':          { url: squashGlbUrl,     scale: 0.013, yOffset: 0 },
+  'watermelon':              { url: pumpkinGlbUrl,    scale: 0.015, yOffset: 0 },
+  'watermelon-crimson-sweet':{ url: pumpkinGlbUrl,    scale: 0.015, yOffset: 0 },
+  // ── Asparagus ─────────────────────────────────────────────────
+  'asparagus':               { url: asparagusGlbUrl,  scale: 0.013, yOffset: 0 },
+  // ── Herbs ─────────────────────────────────────────────────────
+  'basil':                   { url: leafy1GlbUrl,     scale: 0.009, yOffset: 0 },
+  'basil-thai':              { url: leafy1GlbUrl,     scale: 0.009, yOffset: 0 },
+  'basil-lemon':             { url: leafy1GlbUrl,     scale: 0.009, yOffset: 0 },
+  'cilantro':                { url: leafy1GlbUrl,     scale: 0.009, yOffset: 0 },
+  'dill':                    { url: leafy2GlbUrl,     scale: 0.011, yOffset: 0 },
+  'parsley':                 { url: leafy1GlbUrl,     scale: 0.009, yOffset: 0 },
+  'parsley-curly':           { url: leafy1GlbUrl,     scale: 0.009, yOffset: 0 },
+  'chive':                   { url: onionGlbUrl,      scale: 0.008, yOffset: 0 },
+  'oregano':                 { url: leafy1GlbUrl,     scale: 0.008, yOffset: 0 },
+  'thyme':                   { url: leafy1GlbUrl,     scale: 0.008, yOffset: 0 },
+  'sage':                    { url: leafy2GlbUrl,     scale: 0.009, yOffset: 0 },
+  'mint':                    { url: leafy2GlbUrl,     scale: 0.009, yOffset: 0 },
+  'fennel':                  { url: leafy3GlbUrl,     scale: 0.012, yOffset: 0 },
+  // ── Flowers ───────────────────────────────────────────────────
+  'marigold':                { url: leafy3GlbUrl,     scale: 0.009, yOffset: 0 },
+  'nasturtium':              { url: leafy2GlbUrl,     scale: 0.009, yOffset: 0 },
+  'borage':                  { url: leafy1GlbUrl,     scale: 0.010, yOffset: 0 },
+  // ── Sunflower ─────────────────────────────────────────────────
+  'sunflower':               { url: sunflowerGlbUrl,  scale: 0.013, yOffset: 0 },
+  // ── Grain/Wheat ───────────────────────────────────────────────
+  'wheat':                   { url: wheatGlbUrl,      scale: 0.013, yOffset: 0 },
+  // ── Strawberry ────────────────────────────────────────────────
+  'strawberry':              { url: strawberryGlbUrl, scale: 0.011, yOffset: 0 },
+  // ── Perennial fruits ──────────────────────────────────────────
+  'raspberry':               { url: leafy3GlbUrl,     scale: 0.013, yOffset: 0 },
+  'blueberry':               { url: leafy2GlbUrl,     scale: 0.012, yOffset: 0 },
+  'kiwi-vine':               { url: beanGlbUrl,       scale: 0.013, yOffset: 0 },
+  'rhubarb':                 { url: leafy3GlbUrl,     scale: 0.013, yOffset: 0 },
+  // ── Fruit Trees ───────────────────────────────────────────────
+  'apple':                   { url: appleTreeGlbUrl,  scale: 0.012, yOffset: 0 },
+  'lemon':                   { url: lemonTreeGlbUrl,  scale: 0.012, yOffset: 0 },
+  'orange':                  { url: orangeTreeGlbUrl, scale: 0.012, yOffset: 0 },
+  'cherry':                  { url: cherryTreeGlbUrl, scale: 0.012, yOffset: 0 },
+  'peach':                   { url: peachTreeGlbUrl,  scale: 0.012, yOffset: 0 },
+  'pear':                    { url: pearTreeGlbUrl,   scale: 0.012, yOffset: 0 },
+  'plum':                    { url: plumTreeGlbUrl,   scale: 0.012, yOffset: 0 },
+  'apricot':                 { url: apricotTreeGlbUrl,scale: 0.012, yOffset: 0 },
 };
 
 // Module-level cache so models survive HMR re-renders
 const gltfCache = new Map<string, THREE.Group>();
 const gltfLoader = new GLTFLoader();
+
+// POLYGON Farm GLBs export a separate "Leaves" material whose baseColorTexture is a
+// 1×1 placeholder (250 bytes). The leaf UV coordinates map to a dark region of the
+// main atlas — swapping in the atlas gives black leaves. Instead, use a solid flat
+// green that matches the POLYGON low-poly aesthetic; the leaf geometry is pre-modelled
+// polygon cards so no alpha texture is needed.
+const POLYGON_LEAF_GREEN = new THREE.Color(0x3d6b27);
+
+function getTexImageWidth(tex: THREE.Texture | null | undefined): number {
+  const img = tex?.image;
+  if (!img) return 0;
+  if ('naturalWidth' in img) return (img as HTMLImageElement).naturalWidth;
+  if ('width'        in img) return (img as ImageBitmap).width;
+  return 0;
+}
+
+function fixLeafTextures(root: THREE.Group): void {
+  root.traverse((child) => {
+    if (!(child instanceof THREE.Mesh)) return;
+    const mats = (Array.isArray(child.material) ? child.material : [child.material]) as THREE.MeshStandardMaterial[];
+    const fixed = mats.map((mat) => {
+      if (!mat) return mat;
+      // Tiny placeholder image (< 64 px) marks the broken "Leaves" material
+      if (getTexImageWidth(mat.map) < 64) {
+        const clone = mat.clone();
+        clone.map = null;
+        clone.color.copy(POLYGON_LEAF_GREEN);
+        clone.transparent = false;
+        clone.needsUpdate = true;
+        return clone;
+      }
+      return mat;
+    });
+    child.material = Array.isArray(child.material) ? fixed : fixed[0];
+  });
+}
 
 function loadPlantModel(
   seedId: string,
@@ -515,21 +745,26 @@ function loadPlantModel(
   gltfLoader.load(
     spec.url,
     (gltf) => {
-      // Normalise: centre at bottom, apply scale
       const box = new THREE.Box3().setFromObject(gltf.scene);
       const size = new THREE.Vector3();
       box.getSize(size);
 
-      // Scale so the tallest axis ≈ 1 unit (1 ft) then multiply by spec.scale factor
       const maxAxis = Math.max(size.x, size.y, size.z);
       const norm = maxAxis > 0 ? (1 / maxAxis) : 1;
-      gltf.scene.scale.setScalar(norm * spec.scale * 100); // GLBs often in cm
+      gltf.scene.scale.setScalar(norm * spec.scale * 100);
 
-      // Re-centre so feet touch y=0
-      const box2 = new THREE.Box3().setFromObject(gltf.scene);
+      // Wrap in a parent Group so the placement group.position.set() call doesn't
+      // overwrite the y-centering offset stored in the inner scene's position.
+      const wrapper = new THREE.Group();
+      wrapper.add(gltf.scene);
+
+      // Shift inner scene so bounding box min (the "feet") aligns with wrapper origin
+      const box2 = new THREE.Box3().setFromObject(wrapper);
       gltf.scene.position.y -= box2.min.y;
 
-      // Enable shadows on every mesh inside
+      // Fix POLYGON Farm "Leaves" material — its embedded texture is a 1×1 placeholder
+      fixLeafTextures(wrapper);
+
       gltf.scene.traverse((child) => {
         if (child instanceof THREE.Mesh) {
           child.castShadow    = true;
@@ -537,8 +772,8 @@ function loadPlantModel(
         }
       });
 
-      gltfCache.set(seedId, gltf.scene);
-      onLoad(gltf.scene.clone());
+      gltfCache.set(seedId, wrapper);
+      onLoad(wrapper.clone());
     },
     undefined,
     (err) => console.warn(`GLTFLoader failed for ${seedId}:`, err)
@@ -943,7 +1178,11 @@ export function Garden3DView({ onExit }: Garden3DViewProps) {
       {/* Plant info card */}
       {focusedPlant && (
         <div className={`view3d-plant-card${mode === 'walk' ? ' view3d-plant-card--walk' : ''}`}>
-          <span className="view3d-plant-icon">{focusedPlant.icon}</span>
+          <span className="view3d-plant-icon">
+            {getSeedIconUrl(focusedPlant.plantId)
+              ? <img src={getSeedIconUrl(focusedPlant.plantId)!} className="plant-icon-img" alt={focusedPlant.plantName} draggable={false} />
+              : focusedPlant.icon}
+          </span>
           <div className="view3d-plant-info">
             <div className="view3d-plant-name">{focusedPlant.plantName}</div>
             <div className="view3d-plant-meta">{focusedPlant.family} · {focusedPlant.heightCategory}</div>

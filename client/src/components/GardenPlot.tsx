@@ -3,6 +3,7 @@ import { useGardenStore } from '../store/useGardenStore';
 import { SEED_CATALOG } from '../catalog/seeds';
 import { SUN_ICONS } from '../utils/sunWarnings';
 import type { Bed, BedType, PlotFeature } from '../types';
+import { PlantIcon } from './PlantIcon';
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -525,7 +526,7 @@ export function GardenPlot({ onSelectBed, onEditFeature }: GardenPlotProps) {
 
                   {plantSeeds.length > 0 ? (
                     <div className="plot-bed-icons">
-                      {plantSeeds.map((seed) => seed && <span key={seed.id} title={seed.name}>{seed.icon}</span>)}
+                      {plantSeeds.map((seed) => seed && <span key={seed.id} title={seed.name}><PlantIcon seed={seed} /></span>)}
                       {overflow > 0 && <span style={{ fontSize: '0.55rem', opacity: 0.6 }}>+{overflow}</span>}
                     </div>
                   ) : (

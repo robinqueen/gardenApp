@@ -4384,6 +4384,26 @@ ul { list-style: none; }
 
 
 
+/* ─── PlantIcon POLYGON image icon ──────────────────────────────────────── */
+.plant-icon-img {
+  display: inline-block;
+  width: 1.6rem;
+  height: 1.6rem;
+  vertical-align: middle;
+  object-fit: contain;
+  image-rendering: auto;
+  flex-shrink: 0;
+}
+
+/* Context-specific overrides so the 3D-render icon fills its slot cleanly */
+.seed-detail-icon .plant-icon-img     { width: 4rem;   height: 4rem; }
+.seed-card .seed-icon .plant-icon-img { width: 2.5rem; height: 2.5rem; }
+.dash-plant-icon .plant-icon-img      { width: 2.2rem; height: 2.2rem; }
+.view3d-plant-icon .plant-icon-img    { width: 2.5rem; height: 2.5rem; }
+.seed-inventory-icon                  { width: 2.5rem; height: 2.5rem; display: inline-block; }
+.gantt-row-icon .plant-icon-img       { width: 1.4rem; height: 1.4rem; }
+.gantt-bar-label .plant-icon-img      { width: 1.1rem; height: 1.1rem; }
+
 /* ─── PlantIcon approximate badge ───────────────────────────────────────── */
 .plant-icon-wrap {
   position: relative;

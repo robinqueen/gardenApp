@@ -5,6 +5,8 @@ import { BedGrid } from '../components/BedGrid';
 import type { GardenSeason, ActivityLog, ActivityType } from '../types';
 import { summarizeYieldByCrop } from '../utils/yieldSummary';
 import { trackSeasonViewed } from '../utils/analytics';
+import { PlantIcon } from '../components/PlantIcon';
+import { getSeedIconUrl } from '../catalog/seedIcons';
 
 const ACTIVITY_ICONS: Record<ActivityType, string> = {
   watered: '💧',
@@ -173,7 +175,7 @@ function SeasonCard({
         <div className="season-plant-icons">
           {Array.from(uniquePlants).slice(0, 12).map((id) => {
             const seed = SEED_CATALOG.find((s) => s.id === id);
-            return seed ? <span key={id} title={seed.name}>{seed.icon}</span> : null;
+            return seed ? <span key={id} title={seed.name}><PlantIcon seed={seed} /></span> : null;
           })}
           {uniquePlants.size > 12 && <span className="text-muted">+{uniquePlants.size - 12}</span>}
         </div>
@@ -307,7 +309,7 @@ function SeasonDetail({
             );
             return (
               <div key={seed.id} className="seed-card">
-                <div className="seed-icon">{seed.icon}</div>
+                <div className="seed-icon"><PlantIcon seed={seed} /></div>
                 <div className="seed-name">{seed.name}</div>
                 <div className="seed-family">{count} slot{count !== 1 ? 's' : ''}</div>
               </div>
@@ -333,7 +335,11 @@ function SeasonDetail({
               <div className="section-label" style={{ marginBottom: '0.5rem' }}>🧺 Harvest totals</div>
               {yieldSummary.map((crop) => (
                 <div key={crop.plantId} className="yield-row">
-                  <span className="yield-icon">{crop.icon}</span>
+                  <span className="yield-icon">
+                    {getSeedIconUrl(crop.plantId)
+                      ? <img src={getSeedIconUrl(crop.plantId)!} className="plant-icon-img" alt={crop.cropName} draggable={false} />
+                      : crop.icon}
+                  </span>
                   <span className="yield-crop">{crop.cropName}</span>
                   <span className="yield-total">
                     {crop.totalLbs != null && `${crop.totalLbs} lbs`}

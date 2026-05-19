@@ -1,33 +1,35 @@
-/**
- * PlantIcon
- *
- * Renders a seed/plant emoji icon. When `iconIsApprox` is true on the seed
- * a small `~` badge is overlaid in the bottom-right corner to signal that
- * the emoji is the closest available approximation — not a literal match.
- *
- * Usage:
- *   <PlantIcon seed={seed} />
- *   <PlantIcon seed={seed} size="lg" />
- */
-
 import type { CatalogSeed } from '../types';
+import { getSeedIconUrl } from '../catalog/seedIcons';
 
 interface PlantIconProps {
-  seed: Pick<CatalogSeed, 'icon' | 'iconIsApprox'>;
-  /** Extra class applied to the outer wrapper span. */
+  seed: Pick<CatalogSeed, 'icon' | 'iconIsApprox'> & { id?: string; seedId?: string };
   className?: string;
 }
 
 export function PlantIcon({ seed, className }: PlantIconProps) {
+  const resolvedId = seed.id ?? seed.seedId ?? '';
+  const imgUrl = getSeedIconUrl(resolvedId);
+
+  if (imgUrl) {
+    return (
+      <img
+        src={imgUrl}
+        alt={seed.id}
+        className={`plant-icon-img${className ? ` ${className}` : ''}`}
+        draggable={false}
+      />
+    );
+  }
+
+  // Emoji fallback (no POLYGON icon available)
   if (!seed.iconIsApprox) {
-    // No badge needed — render plain, no wrapper overhead
     return <span className={className}>{seed.icon}</span>;
   }
 
   return (
     <span className={`plant-icon-wrap${className ? ` ${className}` : ''}`}>
       {seed.icon}
-      <span className="plant-icon-approx" title="Icon is an approximation — no exact emoji available">~</span>
+      <span className="plant-icon-approx" title="Icon is an approximation">~</span>
     </span>
   );
 }

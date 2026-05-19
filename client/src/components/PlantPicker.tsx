@@ -381,7 +381,7 @@ export function PlantPicker({ cellX, cellY, bed, onPlace, onCancel, editingSlot,
         <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
           <div className="modal-handle" />
           <div className="modal-title">
-            {selected.icon} {selected.name}
+            <PlantIcon seed={selected} /> {selected.name}
             <span className="picker-category-badge">{selected.category}</span>
           </div>
 
@@ -525,7 +525,7 @@ export function PlantPicker({ cellX, cellY, bed, onPlace, onCancel, editingSlot,
               </button>
             )}
             <button className="btn btn-primary btn-full" onClick={handlePlace}>
-              {isEditing ? `Update ${selected.icon}` : `Place ${selected.icon} here`}
+              <PlantIcon seed={selected} />{' '}{isEditing ? `Update ${selected.name}` : `Place ${selected.name} here`}
             </button>
           </div>
         </div>

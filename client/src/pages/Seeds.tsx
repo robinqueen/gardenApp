@@ -197,7 +197,7 @@ function SeedDetail({
 
       <div className="seed-detail">
         <div className="seed-detail-header">
-          <div className="seed-detail-icon">{seed.icon}</div>
+          <div className="seed-detail-icon"><PlantIcon seed={seed} /></div>
           <div className="seed-detail-title">
             <h2>{seed.name}</h2>
             <p>{seed.family}</p>
@@ -328,7 +328,7 @@ function InventoryCard({
     <div className="card" style={{ marginBottom: '0.75rem' }}>
       <div className="card-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <span style={{ fontSize: '1.75rem' }}>{catalog.icon}</span>
+          <PlantIcon seed={catalog} className="seed-inventory-icon" />
           <div>
             <div className="card-title">{catalog.name}</div>
             <div className="text-muted text-sm">{catalog.family} · {user.purchaseYear}</div>

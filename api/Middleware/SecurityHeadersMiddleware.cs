@@ -44,7 +44,8 @@ public sealed class SecurityHeadersMiddleware(RequestDelegate next)
                 "https://region1.google-analytics.com " +
                 "https://stats.g.doubleclick.net " +
                 "https://*.clarity.ms " +
-                "https://cloudflareinsights.com; " +
+                "https://cloudflareinsights.com " +
+                "https://api.open-meteo.com; " +
             "font-src 'self'; " +
             "object-src 'none'; " +
             "frame-ancestors 'none'; " +

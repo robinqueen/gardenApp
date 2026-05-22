@@ -107,8 +107,12 @@ function GardenApp({ authUser }: { authUser: AuthUser | null }) {
   return (
     <div className="app-shell">
       <Routes>
-        {/* "/" → immediately goes to setup or dashboard (no marketing wall in auth mode) */}
-        <Route path="/" element={<LandingPage />} />
+        {/* "/" → skip landing if already authenticated */}
+        <Route path="/" element={
+          AUTH_ENABLED && authUser !== null
+            ? <Navigate to={settings.setupComplete ? '/dashboard' : '/setup'} replace />
+            : <LandingPage />
+        } />
         <Route path="/setup" element={<Setup />} />
         <Route path="/share/:data" element={<ShareView />} />
         <Route path="/guide" element={<GuidePage />} />

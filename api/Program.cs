@@ -265,8 +265,16 @@ if (authEnabled)
 // index.html and sw.js must never be HTTP-cached so the browser always fetches
 // the latest version after a deploy (prevents stale PWA after update).
 // Hashed JS/CSS assets get default long-lived caching.
+//
+// Register .glb/.gltf MIME types — ASP.NET Core's default provider omits them,
+// which causes UseStaticFiles to return 404 for 3D plant model assets.
+var contentTypeProvider = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
+contentTypeProvider.Mappings[".glb"]  = "model/gltf-binary";
+contentTypeProvider.Mappings[".gltf"] = "model/gltf+json";
+
 var noCacheHtml = new StaticFileOptions
 {
+    ContentTypeProvider = contentTypeProvider,
     OnPrepareResponse = ctx =>
     {
         var name = ctx.File.Name;

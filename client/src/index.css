@@ -4024,7 +4024,7 @@ ul { list-style: none; }
   min-height: 100dvh;
   background: var(--color-bg);
   font-family: var(--font-sans);
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* ── Nav ──────────────────────────────────────────────────────── */
